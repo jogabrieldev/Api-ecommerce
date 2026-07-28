@@ -1,4 +1,4 @@
-package com.api.e_commerce.model;
+package com.api.e_commerce.domain.model;
 
 public enum AdministratorRole {
     ADMIN,
