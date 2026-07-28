@@ -1,0 +1,39 @@
+package com.api.e_commerce.infrastructure.persistence;
+
+import com.api.e_commerce.domain.model.Category;
+import com.api.e_commerce.domain.repository.CategoryRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.transaction.Transactional;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+
+@Repository
+public class CategoryPersistenceAdapter implements CategoryRepository {
+
+    private final EntityManager entityManager;
+
+    public CategoryPersistenceAdapter(EntityManager entityManager) {
+        this.entityManager = entityManager;
+    }
+
+    @Override
+    @Transactional
+    public Category save(Category category) {
+        entityManager.persist(category);
+        return category;
+    }
+
+    @Override
+    public Optional<Category> findById(Long id) {
+        return Optional.ofNullable(entityManager.find(Category.class, id));
+    }
+
+    @Override
+    public boolean existsByNameIgnoreCase(String name) {
+        return entityManager.createQuery(
+                        "select count(c) from Category c where lower(c.name) = lower(:name)", Long.class)
+                .setParameter("name", name)
+                .getSingleResult() > 0;
+    }
+}
