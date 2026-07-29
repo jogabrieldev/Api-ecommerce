@@ -33,7 +33,7 @@ public class AdministratorPersistenceAdapter implements AdministratorRepository 
     @Override
     public Optional<Administrator> findByEmail(String email) {
         return entityManager.createQuery(
-                        "select a from Administrator a where a.email = :email", Administrator.class)
+                "select a from Administrator a where a.email = :email", Administrator.class)
                 .setParameter("email", email)
                 .getResultStream()
                 .findFirst();
@@ -41,9 +41,7 @@ public class AdministratorPersistenceAdapter implements AdministratorRepository 
 
     @Override
     public List<Administrator> getUserAdm() {
-        return entityManager.createQuery(
-                        "select a from Administrator a order by a.id", Administrator.class)
-                .getResultList();
+        return entityManager.createQuery("select a from Administrator a order by a.id", Administrator.class).getResultList();
     }
 
     @Override
