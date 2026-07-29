@@ -42,7 +42,7 @@ public class AdministratorController {
                 request.role()
         );
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new CreatedResponse(administrator.getId()));
+                .body(new CreatedResponse(administrator.getId(), administrator.getName()));
     }
 
     @GetMapping

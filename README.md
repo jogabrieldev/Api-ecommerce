@@ -22,6 +22,11 @@ representadas por regras e implementações internas.
 - bloqueio do cadastro de produtos em categorias inativas;
 - validação de preço e estoque.
 
+### Cadastro de clientes
+
+O fluxo de clientes inclui dados pessoais, senha protegida com BCrypt e endereÃ§o.
+E-mail e CPF sÃ£o Ãºnicos, e o CPF Ã© validado pelos dÃ­gitos verificadores.
+
 ## Arquitetura
 
 O projeto utiliza uma abordagem pragmática inspirada em Clean Architecture:
@@ -147,11 +152,43 @@ Content-Type: application/json
 }
 ```
 
+### Cadastrar cliente
+
+```http
+POST /customers
+Content-Type: application/json
+```
+
+```json
+{
+  "name": "Maria da Silva",
+  "email": "maria@email.com",
+  "password": "uma-senha-segura",
+  "cpf": "529.982.247-25",
+  "phone": "(11) 99999-8888",
+  "birthDate": "1990-05-20",
+  "address": {
+    "zipCode": "01310-100",
+    "street": "Avenida Paulista",
+    "number": "1000",
+    "complement": "Apto 10",
+    "neighborhood": "Bela Vista",
+    "city": "SÃ£o Paulo",
+    "state": "SP"
+  }
+}
+```
+
+O cliente e seu endereÃ§o sÃ£o persistidos na mesma transaÃ§Ã£o. Com
+`spring.jpa.hibernate.ddl-auto=update`, as tabelas `customers` e
+`customer_addresses` sÃ£o criadas automaticamente ao iniciar a aplicaÃ§Ã£o.
+
 Os endpoints de cadastro retornam:
 
 ```json
 {
-  "id": 1
+  "id": 1,
+  "name": "Nome do recurso"
 }
 ```
 

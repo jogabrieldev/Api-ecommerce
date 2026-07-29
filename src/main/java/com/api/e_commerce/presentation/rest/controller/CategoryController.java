@@ -26,6 +26,6 @@ public class CategoryController {
     public ResponseEntity<CreatedResponse> create(@Valid @RequestBody CreateCategoryRequest request) {
         Category category = createCategoryUseCase.execute(request.name(), request.description());
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new CreatedResponse(category.getId()));
+                .body(new CreatedResponse(category.getId(), category.getName()));
     }
 }
