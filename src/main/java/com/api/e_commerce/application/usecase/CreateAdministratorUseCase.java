@@ -13,16 +13,12 @@ public class CreateAdministratorUseCase {
     private final AdministratorRepository administratorRepository;
     private final PasswordHasher passwordHasher;
 
-    public CreateAdministratorUseCase(
-            AdministratorRepository administratorRepository,
-            PasswordHasher passwordHasher
-    ) {
+    public CreateAdministratorUseCase(AdministratorRepository administratorRepository, PasswordHasher passwordHasher) {
         this.administratorRepository = administratorRepository;
         this.passwordHasher = passwordHasher;
     }
 
-    public Administrator execute(String name, String email, String password, String cpf,
-                                 AdministratorRole role) {
+    public Administrator execute(String name, String email, String password, String cpf, AdministratorRole role) {
         String normalizedEmail = email.trim().toLowerCase();
 
         if (administratorRepository.existsByEmail(normalizedEmail)) {
