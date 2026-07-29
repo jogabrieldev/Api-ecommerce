@@ -26,10 +26,7 @@ public class AdministratorUserDetailsService implements UserDetailsService {
 
         return User.withUsername(administrator.getEmail())
                 .password(administrator.getPasswordHash())
-                .authorities(
-                        "ROLE_" + administrator.getRole().name(),
-                        CREATE_PRODUCT_PERMISSION
-                )
+                .authorities("ROLE_" + administrator.getRole().name(), CREATE_PRODUCT_PERMISSION)
                 .disabled(!Boolean.TRUE.equals(administrator.getActive()))
                 .build();
     }

@@ -2,32 +2,48 @@ package com.api.e_commerce.presentation.rest.controller;
 
 import com.api.e_commerce.application.usecase.CreateProductUseCase;
 import com.api.e_commerce.application.usecase.FindAllProductsUseCase;
+import com.api.e_commerce.application.usecase.FindProductByIdUseCase;
+import com.api.e_commerce.application.usecase.SearchProductsUseCase;
 import com.api.e_commerce.domain.model.Product;
 import com.api.e_commerce.presentation.rest.request.CreateProductRequest;
 import com.api.e_commerce.presentation.rest.response.CreatedResponse;
 import com.api.e_commerce.presentation.rest.response.ProductResponse;
+import com.api.e_commerce.presentation.rest.response.PageResponse;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/products")
+@Validated
 public class ProductController {
 
     private final CreateProductUseCase createProductUseCase;
     private final FindAllProductsUseCase findAllProductsUseCase;
+    private final FindProductByIdUseCase findProductByIdUseCase;
+    private final SearchProductsUseCase searchProductsUseCase;
 
-    public ProductController(CreateProductUseCase createProductUseCase, FindAllProductsUseCase findAllProductsUseCase) {
+    public ProductController(CreateProductUseCase createProductUseCase,
+                             FindAllProductsUseCase findAllProductsUseCase,
+                             FindProductByIdUseCase findProductByIdUseCase,
+                             SearchProductsUseCase searchProductsUseCase) {
         this.createProductUseCase = createProductUseCase;
         this.findAllProductsUseCase = findAllProductsUseCase;
+        this.findProductByIdUseCase = findProductByIdUseCase;
+        this.searchProductsUseCase = searchProductsUseCase;
     }
 
     @PostMapping
@@ -52,5 +68,31 @@ public class ProductController {
                 .map(ProductResponse::from)
                 .toList();
         return ResponseEntity.ok(products);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<ProductResponse> findById(@PathVariable @Min(1) Long id) {
+        return ResponseEntity.ok(ProductResponse.from(findProductByIdUseCase.execute(id)));
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<PageResponse<ProductResponse>> search(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) @Min(1) Long categoryId,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
+        SearchProductsUseCase.Result result =
+                searchProductsUseCase.execute(name, categoryId, page, size);
+        List<ProductResponse> content = result.products()
+                .stream()
+                .map(ProductResponse::from)
+                .toList();
+        return ResponseEntity.ok(new PageResponse<>(
+                content,
+                result.page(),
+                result.size(),
+                result.totalElements(),
+                result.totalPages()
+        ));
     }
 }
