@@ -35,7 +35,8 @@ public class AdministratorPersistenceAdapter implements AdministratorRepository 
         return entityManager.createQuery(
                 "select a from Administrator a where a.email = :email", Administrator.class)
                 .setParameter("email", email)
-                .getResultStream()
+                .getResultList()
+                .stream()
                 .findFirst();
     }
 

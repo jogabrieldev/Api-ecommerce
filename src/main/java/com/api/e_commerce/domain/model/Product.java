@@ -123,6 +123,16 @@ public class Product {
         this.stock = stock;
     }
 
+    public void decreaseStock(int quantity) {
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Quantity must be greater than zero");
+        }
+        if (quantity > stock) {
+            throw new IllegalStateException("Insufficient stock");
+        }
+        stock -= quantity;
+    }
+
     public Boolean getActive() {
         return active;
     }

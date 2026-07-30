@@ -3,6 +3,7 @@ package com.api.e_commerce.infrastructure.persistence;
 import com.api.e_commerce.domain.model.Product;
 import com.api.e_commerce.domain.repository.ProductRepository;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Repository;
 
@@ -55,6 +56,22 @@ public class ProductPersistenceAdapter implements ProductRepository {
                         Product.class
                 )
                 .setParameter("id", id)
+                .getResultStream()
+                .findFirst();
+    }
+
+    @Override
+    public Optional<Product> findActiveByIdForUpdate(Long id) {
+        return entityManager.createQuery(
+                        """
+                        select p
+                        from Product p
+                        where p.id = :id
+                          and p.active = true
+                        """,
+                        Product.class)
+                .setParameter("id", id)
+                .setLockMode(LockModeType.PESSIMISTIC_WRITE)
                 .getResultStream()
                 .findFirst();
     }

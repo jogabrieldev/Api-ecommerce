@@ -12,5 +12,7 @@ public interface CustomerRepository {
 
     boolean existsByCpf(String cpf);
 
+    Optional<Customer> findByEmail(String email);
+
     Optional<Customer> findByIdForUpdate(Long id);
 }
