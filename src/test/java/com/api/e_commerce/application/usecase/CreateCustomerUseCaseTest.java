@@ -86,6 +86,13 @@ class CreateCustomerUseCaseTest {
         }
 
         @Override
+        public Optional<Customer> findByEmail(String email) {
+            return customer != null && customer.getEmail().equals(email)
+                    ? Optional.of(customer)
+                    : Optional.empty();
+        }
+
+        @Override
         public Optional<Customer> findByIdForUpdate(Long id) {
             return Optional.ofNullable(customer);
         }

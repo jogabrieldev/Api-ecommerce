@@ -2,15 +2,21 @@ package com.api.e_commerce.presentation.rest.controller;
 
 import com.api.e_commerce.application.usecase.AddProductToCartUseCase;
 import com.api.e_commerce.application.usecase.ClearCartUseCase;
+import com.api.e_commerce.application.usecase.CheckoutCartUseCase;
 import com.api.e_commerce.application.usecase.FindActiveCartUseCase;
 import com.api.e_commerce.application.usecase.RemoveCartItemUseCase;
 import com.api.e_commerce.application.usecase.UpdateCartItemQuantityUseCase;
 import com.api.e_commerce.presentation.rest.request.AddCartItemRequest;
 import com.api.e_commerce.presentation.rest.request.UpdateCartItemRequest;
+import com.api.e_commerce.presentation.rest.request.CheckoutRequest;
 import com.api.e_commerce.presentation.rest.response.CartResponse;
+import com.api.e_commerce.presentation.rest.response.OrderResponse;
+import com.api.e_commerce.presentation.rest.response.CheckoutResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,17 +37,20 @@ public class CartController {
     private final UpdateCartItemQuantityUseCase updateCartItemQuantityUseCase;
     private final RemoveCartItemUseCase removeCartItemUseCase;
     private final ClearCartUseCase clearCartUseCase;
+    private final CheckoutCartUseCase checkoutCartUseCase;
 
     public CartController(AddProductToCartUseCase addProductToCartUseCase,
                           FindActiveCartUseCase findActiveCartUseCase,
                           UpdateCartItemQuantityUseCase updateCartItemQuantityUseCase,
                           RemoveCartItemUseCase removeCartItemUseCase,
-                          ClearCartUseCase clearCartUseCase) {
+                          ClearCartUseCase clearCartUseCase,
+                          CheckoutCartUseCase checkoutCartUseCase) {
         this.addProductToCartUseCase = addProductToCartUseCase;
         this.findActiveCartUseCase = findActiveCartUseCase;
         this.updateCartItemQuantityUseCase = updateCartItemQuantityUseCase;
         this.removeCartItemUseCase = removeCartItemUseCase;
         this.clearCartUseCase = clearCartUseCase;
+        this.checkoutCartUseCase = checkoutCartUseCase;
     }
 
     @PostMapping("/items")
@@ -83,5 +92,20 @@ public class CartController {
             @PathVariable @Min(1) Long customerId) {
         clearCartUseCase.execute(customerId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/checkout")
+    public ResponseEntity<CheckoutResponse> checkout(
+            @PathVariable @Min(1) Long customerId,
+            @Valid @RequestBody CheckoutRequest request,
+            Authentication authentication) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(CheckoutResponse.from(
+                        checkoutCartUseCase.execute(
+                                customerId,
+                                authentication.getName(),
+                                request.paymentMethod(),
+                                request.paymentToken(),
+                                request.idempotencyKey())));
     }
 }

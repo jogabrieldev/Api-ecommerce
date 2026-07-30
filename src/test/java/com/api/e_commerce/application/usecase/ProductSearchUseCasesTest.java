@@ -84,6 +84,11 @@ class ProductSearchUseCasesTest {
         }
 
         @Override
+        public Optional<Product> findActiveByIdForUpdate(Long id) {
+            return findActiveById(id);
+        }
+
+        @Override
         public List<Product> searchActive(String name, Long categoryId, int offset, int limit) {
             this.name = name;
             this.categoryId = categoryId;
