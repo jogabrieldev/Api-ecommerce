@@ -1,31 +1,74 @@
 # E-commerce API
 
-API REST de e-commerce desenvolvida como projeto de estudo com Java e Spring Boot.
-O objetivo é construir gradualmente os principais processos de uma loja virtual,
-praticando modelagem de domínio, regras de negócio, persistência, testes e princípios
-de Clean Architecture.
+API REST de comércio eletrônico desenvolvida com Java e Spring Boot. O projeto implementa os principais processos de uma loja virtual, abrangendo gerenciamento de catálogo, clientes, carrinho de compras, checkout, pedidos, pagamentos simulados e acompanhamento financeiro.
 
-Neste momento, o projeto não realiza integrações com gateways de pagamento,
-transportadoras ou outros serviços externos. Essas funcionalidades serão inicialmente
-representadas por regras e implementações internas.
+O desenvolvimento utiliza uma organização inspirada em Clean Architecture, buscando separar regras de negócio, casos de uso, persistência e comunicação HTTP.
 
-## Funcionalidades atuais
+## Funcionalidades implementadas
 
-- cadastro de administradores;
-- cadastro de categorias;
-- cadastro de produtos;
-- associação obrigatória do produto a uma categoria;
-- registro do administrador responsável pelo cadastro do produto;
-- validação de e-mail e CPF únicos para administradores;
-- validação de nome único para categorias;
-- bloqueio do cadastro de produtos por administradores inativos;
-- bloqueio do cadastro de produtos em categorias inativas;
-- validação de preço e estoque.
+### Administradores
 
-### Cadastro de clientes
+- Cadastro e listagem de administradores;
+- senhas protegidas com BCrypt;
+- validação de e-mail e CPF únicos;
+- papéis administrativos `ADMIN` e `MANAGER`;
+- controle de administradores ativos;
+- identificação do administrador responsável por cada produto;
+- consulta de resumo financeiro individual.
 
-O fluxo de clientes inclui dados pessoais, senha protegida com BCrypt e endereÃ§o.
-E-mail e CPF sÃ£o Ãºnicos, e o CPF Ã© validado pelos dÃ­gitos verificadores.
+### Clientes
+
+- Cadastro de clientes e endereços;
+- validação dos dígitos verificadores do CPF;
+- normalização de e-mail, CPF e telefone;
+- validação de data de nascimento;
+- senhas armazenadas com BCrypt;
+- autenticação e emissão de token JWT;
+- controle de clientes ativos.
+
+### Categorias e produtos
+
+- Cadastro de categorias com nome único;
+- cadastro de produtos vinculados a uma categoria;
+- associação do produto ao administrador responsável;
+- validação de preço e estoque;
+- bloqueio de operações realizadas por administradores inativos;
+- bloqueio de produtos em categorias inativas;
+- listagem e consulta individual de produtos;
+- pesquisa por nome e categoria;
+- paginação dos resultados de pesquisa.
+
+### Carrinho de compras
+
+- Criação automática de carrinho ativo;
+- adição de produtos;
+- acumulação de quantidade para itens repetidos;
+- alteração de quantidade;
+- remoção de itens;
+- limpeza do carrinho;
+- consulta do carrinho ativo;
+- validação da disponibilidade em estoque.
+
+### Checkout, pedidos e pagamentos
+
+- Finalização autenticada do carrinho;
+- validação de propriedade do cliente;
+- criação de pedido e itens de pedido;
+- preservação do preço dos produtos no momento da compra;
+- redução transacional do estoque;
+- pagamentos simulados aprovados ou recusados;
+- suporte a cartão de crédito, cartão de débito e PIX;
+- armazenamento de motivo e referência de pagamentos recusados;
+- idempotência para evitar o processamento duplicado do checkout;
+- distribuição dos valores da venda entre os administradores responsáveis pelos produtos.
+
+### Resumo financeiro
+
+Cada administrador pode consultar informações relacionadas aos próprios produtos:
+
+- valor total recebido em pagamentos aprovados;
+- quantidade de unidades vendidas;
+- estoque atual dos produtos cadastrados.
 
 ## Arquitetura
 
@@ -38,170 +81,160 @@ presentation/rest
 application/usecase
        |
        v
-domain/repository
+domain
        ^
        |
-infrastructure/persistence
+infrastructure
 ```
 
-### `domain`
+### Domain
 
-Contém os modelos, exceções de negócio e contratos de persistência. Essa camada não
-conhece controllers, códigos HTTP ou detalhes do acesso ao banco.
+Contém as entidades e regras centrais da aplicação, incluindo clientes, administradores, produtos, categorias, carrinhos, pedidos e pagamentos.
 
-### `application`
+Também define:
 
-Contém os casos de uso da aplicação, como criação de administradores, categorias e
-produtos. Os casos de uso coordenam as regras do domínio e dependem somente das
-interfaces de repositório.
+- exceções de negócio;
+- contratos de repositório;
+- contrato do gateway de pagamento;
+- abstração para proteção de senhas;
+- validação personalizada de CPF.
 
-### `infrastructure`
+As entidades possuem anotações JPA. Essa decisão mantém o projeto mais direto, evitando a duplicação entre modelos de domínio e persistência.
 
-Contém os adaptadores responsáveis pela persistência com JPA e MySQL.
+### Application
 
-### `presentation`
+Contém os casos de uso responsáveis por coordenar os fluxos da aplicação.
 
-Contém controllers REST, objetos de entrada e saída e o tratamento centralizado de
-erros HTTP.
+Essa camada realiza operações como:
 
-As classes de domínio ainda possuem anotações JPA. Essa é uma decisão pragmática para
-evitar duplicação prematura entre modelos de domínio e modelos de persistência.
+- cadastrar clientes e administradores;
+- criar e pesquisar produtos;
+- manipular o carrinho;
+- executar o checkout;
+- consultar informações financeiras.
+
+Os casos de uso dependem dos contratos definidos no domínio, sem conhecer detalhes dos controllers ou do acesso ao banco.
+
+### Infrastructure
+
+Implementa os recursos técnicos utilizados pela aplicação:
+
+- persistência com JPA, Hibernate e MySQL;
+- consultas e agregações com JPQL;
+- bloqueios pessimistas para operações concorrentes;
+- hash de senhas com BCrypt;
+- autenticação com Spring Security;
+- geração e validação de JWT;
+- gateway de pagamento simulado.
+
+### Presentation
+
+Expõe as funcionalidades por meio de uma API REST.
+
+Essa camada contém:
+
+- controllers;
+- objetos de requisição e resposta;
+- validação dos dados recebidos;
+- conversão dos resultados para JSON;
+- tratamento centralizado de exceções;
+- definição dos códigos HTTP retornados.
+
+## Segurança
+
+A aplicação utiliza Spring Security com sessões stateless.
+
+Clientes são autenticados por e-mail e senha e recebem um token JWT para operações protegidas. Administradores são carregados com seus papéis e permissões, permitindo controlar operações como cadastro de produtos e consulta financeira.
+
+As senhas nunca são armazenadas em texto puro e são protegidas com BCrypt.
+
+## Persistência e consistência
+
+A aplicação utiliza MySQL com JPA e Hibernate.
+
+Os fluxos que alteram múltiplos registros são transacionais. Operações de carrinho e checkout utilizam bloqueios no banco para reduzir conflitos entre requisições simultâneas.
+
+Durante o checkout, os produtos são bloqueados e processados em ordem determinística. Isso protege o estoque e reduz o risco de inconsistências e deadlocks.
+
+A chave de idempotência impede que a mesma tentativa de pagamento seja processada mais de uma vez.
+
+## Pagamentos simulados
+
+O projeto utiliza uma implementação interna de gateway de pagamento. Ela permite reproduzir pagamentos aprovados e recusados sem depender de serviços externos.
+
+O resultado do pagamento é armazenado com status, valor, método, referência e, quando aplicável, motivo da recusa.
+
+## Tratamento de erros
+
+As exceções são tratadas de forma centralizada e convertidas em respostas HTTP padronizadas.
+
+A aplicação diferencia situações como:
+
+- dados de entrada inválidos;
+- violação de regra de negócio;
+- recurso não encontrado;
+- operação não autorizada;
+- conflito de dados;
+- pagamento recusado;
+- erro interno inesperado.
+
+## Testes
+
+O projeto possui testes automatizados para regras e fluxos importantes, incluindo:
+
+- validação de CPF;
+- cadastro de clientes;
+- manipulação do carrinho;
+- pesquisa e paginação de produtos;
+- checkout aprovado e recusado;
+- redução de estoque;
+- idempotência de pagamentos;
+- autorização do cliente;
+- resumo financeiro;
+- geração e validação de JWT;
+- inicialização do contexto Spring.
+
+Para executar os testes:
+
+```bash
+mvn test
+```
 
 ## Tecnologias
 
 - Java 21;
 - Spring Boot 4;
 - Spring Web MVC;
+- Spring Security;
 - Spring Data JPA;
+- Hibernate;
 - Jakarta Validation;
 - MySQL;
-- Maven.
+- Maven;
+- JUnit;
+- Mockito;
+- Lombok.
 
-## Configuração
+## Executando a aplicação
 
-Crie o banco e o usuário configurados em `application.properties`:
+É necessário ter Java 21 e MySQL disponíveis.
+
+Crie o banco utilizado pela aplicação:
 
 ```sql
 CREATE DATABASE ecommerce_db;
 ```
 
-Defina a senha do banco na variável de ambiente `DB_PASSWORD`.
+Configure as variáveis de ambiente necessárias para o banco de dados e para a assinatura dos tokens JWT.
 
-No PowerShell:
-
-```powershell
-$env:DB_PASSWORD="sua-senha"
-```
-
-Execute a aplicação:
+Execute a aplicação com o Maven Wrapper:
 
 ```powershell
-mvn spring-boot:run
+.\mvnw.cmd spring-boot:run
 ```
 
-A API será iniciada em `http://localhost:8080`.
+A API será iniciada, por padrão, em:
 
-## Endpoints atuais
-
-### Cadastrar administrador
-
-```http
-POST /administrators
-Content-Type: application/json
+```text
+http://localhost:8080
 ```
-
-```json
-{
-  "name": "Administrador",
-  "email": "admin@email.com",
-  "password": "uma-senha-segura",
-  "cpf": "12345678901",
-  "role": "ADMIN"
-}
-```
-
-### Cadastrar categoria
-
-```http
-POST /categories
-Content-Type: application/json
-```
-
-```json
-{
-  "name": "Eletrônicos",
-  "description": "Produtos eletrônicos"
-}
-```
-
-### Cadastrar produto
-
-```http
-POST /products
-Content-Type: application/json
-```
-
-```json
-{
-  "name": "Notebook",
-  "description": "Notebook para desenvolvimento",
-  "price": 4500.00,
-  "stock": 10,
-  "administratorId": 1,
-  "categoryId": 1
-}
-```
-
-### Cadastrar cliente
-
-```http
-POST /customers
-Content-Type: application/json
-```
-
-```json
-{
-  "name": "Maria da Silva",
-  "email": "maria@email.com",
-  "password": "uma-senha-segura",
-  "cpf": "529.982.247-25",
-  "phone": "(11) 99999-8888",
-  "birthDate": "1990-05-20",
-  "address": {
-    "zipCode": "01310-100",
-    "street": "Avenida Paulista",
-    "number": "1000",
-    "complement": "Apto 10",
-    "neighborhood": "Bela Vista",
-    "city": "SÃ£o Paulo",
-    "state": "SP"
-  }
-}
-```
-
-O cliente e seu endereÃ§o sÃ£o persistidos na mesma transaÃ§Ã£o. Com
-`spring.jpa.hibernate.ddl-auto=update`, as tabelas `customers` e
-`customer_addresses` sÃ£o criadas automaticamente ao iniciar a aplicaÃ§Ã£o.
-
-Os endpoints de cadastro retornam:
-
-```json
-{
-  "id": 1,
-  "name": "Nome do recurso"
-}
-```
-
-## Próximas etapas
-
-O projeto poderá evoluir com:
-
-- autenticação e autorização;
-- clientes e endereços;
-- carrinho de compras;
-- pedidos e itens de pedido;
-- controle transacional de estoque;
-- pagamentos e entregas simulados;
-- migrations de banco;
-- documentação OpenAPI;
-- testes unitários e de integração.
