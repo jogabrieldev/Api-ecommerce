@@ -90,6 +90,11 @@ class CartUseCasesTest {
         public Optional<Cart> findActiveByCustomerId(Long customerId) {
             return Optional.ofNullable(cart);
         }
+
+        @Override
+        public Optional<Cart> findActiveByCustomerIdForUpdate(Long customerId) {
+            return findActiveByCustomerId(customerId);
+        }
     }
 
     private record CustomerRepositoryStub(Customer customer) implements CustomerRepository {
@@ -107,6 +112,11 @@ class CartUseCasesTest {
         @Override
         public boolean existsByCpf(String cpf) {
             return false;
+        }
+
+        @Override
+        public Optional<Customer> findByEmail(String email) {
+            return customer.getEmail().equals(email) ? Optional.of(customer) : Optional.empty();
         }
 
         @Override
@@ -130,6 +140,11 @@ class CartUseCasesTest {
         @Override
         public Optional<Product> findActiveById(Long id) {
             return Optional.of(product);
+        }
+
+        @Override
+        public Optional<Product> findActiveByIdForUpdate(Long id) {
+            return findActiveById(id);
         }
 
         @Override

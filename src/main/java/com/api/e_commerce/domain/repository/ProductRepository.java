@@ -13,6 +13,8 @@ public interface ProductRepository {
 
     Optional<Product> findActiveById(Long id);
 
+    Optional<Product> findActiveByIdForUpdate(Long id);
+
     List<Product> searchActive(String name, Long categoryId, int offset, int limit);
 
     long countActive(String name, Long categoryId);

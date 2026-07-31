@@ -4,6 +4,7 @@ import com.api.e_commerce.domain.model.Cart;
 import com.api.e_commerce.domain.model.CartStatus;
 import com.api.e_commerce.domain.repository.CartRepository;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.LockModeType;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
@@ -28,7 +29,16 @@ public class CartPersistenceAdapter implements CartRepository {
 
     @Override
     public Optional<Cart> findActiveByCustomerId(Long customerId) {
-        return entityManager.createQuery(
+        return findActiveByCustomerId(customerId, false);
+    }
+
+    @Override
+    public Optional<Cart> findActiveByCustomerIdForUpdate(Long customerId) {
+        return findActiveByCustomerId(customerId, true);
+    }
+
+    private Optional<Cart> findActiveByCustomerId(Long customerId, boolean lock) {
+        var query = entityManager.createQuery(
                         """
                         select distinct c
                         from Cart c
@@ -40,8 +50,10 @@ public class CartPersistenceAdapter implements CartRepository {
                         Cart.class
                 )
                 .setParameter("customerId", customerId)
-                .setParameter("status", CartStatus.ACTIVE)
-                .getResultStream()
-                .findFirst();
+                .setParameter("status", CartStatus.ACTIVE);
+        if (lock) {
+            query.setLockMode(LockModeType.PESSIMISTIC_WRITE);
+        }
+        return query.getResultStream().findFirst();
     }
 }

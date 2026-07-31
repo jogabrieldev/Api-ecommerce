@@ -17,11 +17,9 @@ public record CreateCustomerRequest(
         @NotBlank @Size(min = 8, max = 72) String password,
         @NotBlank
         @Pattern(regexp = "(?:\\d[.\\-]?){11}", message = "CPF must contain 11 digits")
-        @ValidCpf
-        String cpf,
+        @ValidCpf String cpf,
         @NotBlank
-        @Pattern(regexp = "\\(?\\d{2}\\)?[\\s-]?\\d{4,5}-?\\d{4}",
-                message = "Phone must contain area code and 10 or 11 digits")
+        @Pattern(regexp = "\\(?\\d{2}\\)?[\\s-]?\\d{4,5}-?\\d{4}", message = "Phone must contain area code and 10 or 11 digits")
         String phone,
         @NotNull @PastOrPresent LocalDate birthDate,
         @NotNull @Valid AddressRequest address
@@ -29,8 +27,7 @@ public record CreateCustomerRequest(
 
     public record AddressRequest(
             @NotBlank
-            @Pattern(regexp = "\\d{5}-?\\d{3}", message = "ZIP code must contain 8 digits")
-            String zipCode,
+            @Pattern(regexp = "\\d{5}-?\\d{3}", message = "ZIP code must contain 8 digits") String zipCode,
             @NotBlank @Size(max = 150) String street,
             @NotBlank @Size(max = 20) String number,
             @Size(max = 100) String complement,

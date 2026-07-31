@@ -34,8 +34,7 @@ public class Cart {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "customer_id", nullable = false,
-            foreignKey = @ForeignKey(name = "fk_cart_customer"))
+    @JoinColumn(name = "customer_id", nullable = false, foreignKey = @ForeignKey(name = "fk_cart_customer"))
     private Customer customer;
 
     @Enumerated(EnumType.STRING)
@@ -54,8 +53,7 @@ public class Cart {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
-    protected Cart() {
-    }
+    protected Cart() {}
 
     public Cart(Customer customer) {
         this.customer = customer;
@@ -89,6 +87,14 @@ public class Cart {
 
     public void clear() {
         items.clear();
+        touch();
+    }
+
+    public void complete() {
+        if (items.isEmpty()) {
+            throw new IllegalStateException("Empty cart cannot be completed");
+        }
+        status = CartStatus.COMPLETED;
         touch();
     }
 

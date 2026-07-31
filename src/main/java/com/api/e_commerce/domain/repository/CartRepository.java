@@ -9,4 +9,6 @@ public interface CartRepository {
     Cart save(Cart cart);
 
     Optional<Cart> findActiveByCustomerId(Long customerId);
+
+    Optional<Cart> findActiveByCustomerIdForUpdate(Long customerId);
 }

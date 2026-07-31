@@ -33,6 +33,17 @@ public class CustomerPersistenceAdapter implements CustomerRepository {
     }
 
     @Override
+    public Optional<Customer> findByEmail(String email) {
+        return entityManager.createQuery(
+                        "select c from Customer c where c.email = :email",
+                        Customer.class)
+                .setParameter("email", email)
+                .getResultList()
+                .stream()
+                .findFirst();
+    }
+
+    @Override
     public Optional<Customer> findByIdForUpdate(Long id) {
         return Optional.ofNullable(entityManager.find(Customer.class, id, LockModeType.PESSIMISTIC_WRITE));
     }

@@ -1,12 +1,20 @@
 package com.api.e_commerce.presentation.rest.controller;
 
 import com.api.e_commerce.application.usecase.CreateCustomerUseCase;
+import com.api.e_commerce.application.usecase.FindAuthenticatedCustomerUseCase;
 import com.api.e_commerce.domain.model.Customer;
 import com.api.e_commerce.presentation.rest.request.CreateCustomerRequest;
+import com.api.e_commerce.presentation.rest.request.CustomerAuthenticationRequest;
 import com.api.e_commerce.presentation.rest.response.CreatedResponse;
+import com.api.e_commerce.presentation.rest.response.CustomerTokenResponse;
+import com.api.e_commerce.infrastructure.security.JwtService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,9 +25,18 @@ import org.springframework.web.bind.annotation.RestController;
 public class CustomerController {
 
     private final CreateCustomerUseCase createCustomerUseCase;
+    private final FindAuthenticatedCustomerUseCase findAuthenticatedCustomerUseCase;
+    private final AuthenticationManager authenticationManager;
+    private final JwtService jwtService;
 
-    public CustomerController(CreateCustomerUseCase createCustomerUseCase) {
+    public CustomerController(CreateCustomerUseCase createCustomerUseCase,
+                              FindAuthenticatedCustomerUseCase findAuthenticatedCustomerUseCase,
+                              AuthenticationManager authenticationManager,
+                              JwtService jwtService) {
         this.createCustomerUseCase = createCustomerUseCase;
+        this.findAuthenticatedCustomerUseCase = findAuthenticatedCustomerUseCase;
+        this.authenticationManager = authenticationManager;
+        this.jwtService = jwtService;
     }
 
     @PostMapping
@@ -44,5 +61,27 @@ public class CustomerController {
         );
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new CreatedResponse(customer.getId(), customer.getName()));
+    }
+
+    @PostMapping("/authentication")
+    public ResponseEntity<CustomerTokenResponse> authenticate(
+            @Valid @RequestBody CustomerAuthenticationRequest request) {
+        Authentication authentication = authenticationManager.authenticate(
+                UsernamePasswordAuthenticationToken.unauthenticated(
+                        request.email().trim().toLowerCase(),
+                        request.password()
+                )
+        );
+        boolean customer = authentication.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals("CUSTOMER_CHECKOUT"));
+        if (!customer) {
+            throw new BadCredentialsException("Invalid customer credentials");
+        }
+
+        Customer authenticatedCustomer =
+                findAuthenticatedCustomerUseCase.execute(authentication.getName());
+        JwtService.Token token = jwtService.generate(authenticatedCustomer.getEmail());
+        return ResponseEntity.ok(CustomerTokenResponse.from(
+                authenticatedCustomer, token.value(), token.expiresIn()));
     }
 }

@@ -14,8 +14,7 @@ public record CreateAdministratorRequest(
         @NotBlank @Size(min = 8, max = 72) String password,
         @NotBlank
         @Pattern(regexp = "\\d{11}", message = "CPF must contain exactly 11 digits")
-        @ValidCpf
-        String cpf,
+        @ValidCpf String cpf,
         @NotNull AdministratorRole role
 ) {
 }
