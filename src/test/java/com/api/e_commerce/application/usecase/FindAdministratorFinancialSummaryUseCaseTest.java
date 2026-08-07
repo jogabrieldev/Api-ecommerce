@@ -27,7 +27,7 @@ class FindAdministratorFinancialSummaryUseCaseTest {
                 new AdministratorRepositoryStub(administrator),
                 administratorId -> expected);
 
-        var result = useCase.execute(1L, "admin@email.com");
+        var result = useCase.execute(java.util.UUID.nameUUIDFromBytes("1".getBytes()), "admin@email.com");
 
         assertEquals(expected, result);
     }
@@ -41,7 +41,7 @@ class FindAdministratorFinancialSummaryUseCaseTest {
                         BigDecimal.ZERO, 0, 0));
 
         assertThrows(ForbiddenOperationException.class,
-                () -> useCase.execute(1L, "other-admin@email.com"));
+                () -> useCase.execute(java.util.UUID.nameUUIDFromBytes("1".getBytes()), "other-admin@email.com"));
     }
 
     private static Administrator administrator() {
@@ -51,7 +51,7 @@ class FindAdministratorFinancialSummaryUseCaseTest {
         try {
             Field id = Administrator.class.getDeclaredField("id");
             id.setAccessible(true);
-            id.set(administrator, 1L);
+            id.set(administrator, java.util.UUID.nameUUIDFromBytes("1".getBytes()));
         } catch (ReflectiveOperationException exception) {
             throw new AssertionError(exception);
         }
@@ -71,7 +71,7 @@ class FindAdministratorFinancialSummaryUseCaseTest {
         }
 
         @Override
-        public Optional<Administrator> findById(Long id) {
+        public Optional<Administrator> findById(java.util.UUID id) {
             return administrator.getId().equals(id)
                     ? Optional.of(administrator)
                     : Optional.empty();

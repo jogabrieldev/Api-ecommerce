@@ -23,8 +23,8 @@ import java.time.LocalDateTime;
 public class Category {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private java.util.UUID id;
 
     @Column(nullable = false, length = 100)
     @NotBlank
@@ -64,7 +64,7 @@ public class Category {
         updatedAt = LocalDateTime.now();
     }
 
-    public Long getId() {
+    public java.util.UUID getId() {
         return id;
     }
 

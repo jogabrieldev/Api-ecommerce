@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public record PaymentResponse(
-        Long id,
+        java.util.UUID id,
         PaymentStatus status,
         PaymentMethod method,
         BigDecimal amount,
@@ -35,7 +35,7 @@ public record PaymentResponse(
     }
 
     public record AllocationResponse(
-            Long administratorId,
+            java.util.UUID administratorId,
             String administratorName,
             BigDecimal amount
     ) {

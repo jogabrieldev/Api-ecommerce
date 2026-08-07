@@ -9,9 +9,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public record OrderResponse(
-        Long id,
-        Long customerId,
-        Long cartId,
+        java.util.UUID id,
+        java.util.UUID customerId,
+        java.util.UUID cartId,
         OrderStatus status,
         List<ItemResponse> items,
         BigDecimal total,
@@ -30,7 +30,7 @@ public record OrderResponse(
     }
 
     public record ItemResponse(
-            Long productId,
+            java.util.UUID productId,
             String productName,
             Integer quantity,
             BigDecimal unitPrice,

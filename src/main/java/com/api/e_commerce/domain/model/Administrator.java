@@ -18,8 +18,8 @@ import java.time.LocalDateTime;
 public class Administrator {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private java.util.UUID id;
 
     @Column(nullable = false, length = 150)
     @NotBlank
@@ -79,7 +79,7 @@ public class Administrator {
         updatedAt = LocalDateTime.now();
     }
 
-    public Long getId() {
+    public java.util.UUID getId() {
         return id;
     }
 

@@ -93,7 +93,7 @@ class CreateCustomerUseCaseTest {
         }
 
         @Override
-        public Optional<Customer> findByIdForUpdate(Long id) {
+        public Optional<Customer> findByIdForUpdate(java.util.UUID id) {
             return Optional.ofNullable(customer);
         }
     }

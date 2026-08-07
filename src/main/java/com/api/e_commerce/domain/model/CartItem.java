@@ -22,8 +22,8 @@ import java.math.BigDecimal;
 public class CartItem {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private java.util.UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "cart_id", nullable = false,
@@ -59,7 +59,7 @@ public class CartItem {
         return unitPrice.multiply(BigDecimal.valueOf(quantity));
     }
 
-    public Long getId() {
+    public java.util.UUID getId() {
         return id;
     }
 

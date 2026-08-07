@@ -14,7 +14,7 @@ public class FindProductByIdUseCase {
         this.productRepository = productRepository;
     }
 
-    public Product execute(Long id) {
+    public Product execute(java.util.UUID id) {
         return productRepository.findActiveById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
     }

@@ -22,8 +22,8 @@ import java.math.BigDecimal;
 public class PaymentAllocation {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private java.util.UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "payment_id", nullable = false,
@@ -47,7 +47,7 @@ public class PaymentAllocation {
         this.amount = amount;
     }
 
-    public Long getId() {
+    public java.util.UUID getId() {
         return id;
     }
 

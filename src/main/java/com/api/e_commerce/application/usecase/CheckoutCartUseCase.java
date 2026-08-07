@@ -49,7 +49,7 @@ public class CheckoutCartUseCase {
     }
 
     @Transactional(noRollbackFor = PaymentDeclinedException.class)
-    public Result execute(Long customerId, String authenticatedEmail,
+    public Result execute(java.util.UUID customerId, String authenticatedEmail,
                           PaymentMethod paymentMethod, String paymentToken,
                           String idempotencyKey) {
         Customer customer = customerRepository.findByIdForUpdate(customerId)
@@ -88,7 +88,7 @@ public class CheckoutCartUseCase {
         return new Result(order, payment);
     }
 
-    private Result handleIdempotentRetry(Payment payment, Long customerId) {
+    private Result handleIdempotentRetry(Payment payment, java.util.UUID customerId) {
         if (!payment.getCustomer().getId().equals(customerId)) {
             throw new ConflictException("Idempotency key belongs to another customer");
         }
@@ -112,7 +112,7 @@ public class CheckoutCartUseCase {
     }
 
     private void validateAndDecreaseStock(CartItem item) {
-        Long productId = item.getProduct().getId();
+        java.util.UUID productId = item.getProduct().getId();
         Product product = productRepository.findActiveByIdForUpdate(productId)
                 .orElseThrow(() -> new BusinessRuleException(
                         "Product " + productId + " is unavailable"));

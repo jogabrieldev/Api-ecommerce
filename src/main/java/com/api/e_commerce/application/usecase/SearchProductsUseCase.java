@@ -15,7 +15,7 @@ public class SearchProductsUseCase {
         this.productRepository = productRepository;
     }
 
-    public Result execute(String name, Long categoryId, int page, int size) {
+    public Result execute(String name, java.util.UUID categoryId, int page, int size) {
         String normalizedName = name == null || name.isBlank() ? null : name.trim();
         int offset = page * size;
         List<Product> products = productRepository.searchActive(normalizedName, categoryId, offset, size);

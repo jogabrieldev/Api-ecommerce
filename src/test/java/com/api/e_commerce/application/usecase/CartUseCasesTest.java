@@ -40,8 +40,8 @@ class CartUseCasesTest {
         );
         Product product = new Product(
                 "Notebook", null, new BigDecimal("100.00"), 5, null, null);
-        setId(customer, 1L);
-        setId(product, 10L);
+        setId(customer, java.util.UUID.nameUUIDFromBytes("1".getBytes()));
+        setId(product, java.util.UUID.nameUUIDFromBytes("10".getBytes()));
 
         cartRepository = new CartRepositoryStub();
         customerRepository = new CustomerRepositoryStub(customer);
@@ -52,8 +52,8 @@ class CartUseCasesTest {
 
     @Test
     void shouldAddAndConsolidateSameProduct() {
-        addUseCase.execute(1L, 10L, 2);
-        Cart cart = addUseCase.execute(1L, 10L, 3);
+        addUseCase.execute(java.util.UUID.nameUUIDFromBytes("1".getBytes()), java.util.UUID.nameUUIDFromBytes("10".getBytes()), 2);
+        Cart cart = addUseCase.execute(java.util.UUID.nameUUIDFromBytes("1".getBytes()), java.util.UUID.nameUUIDFromBytes("10".getBytes()), 3);
 
         assertEquals(1, cart.getItems().size());
         assertEquals(5, cart.getTotalItems());
@@ -63,10 +63,10 @@ class CartUseCasesTest {
     @Test
     void shouldRejectQuantityAboveAvailableStock() {
         assertThrows(BusinessRuleException.class,
-                () -> addUseCase.execute(1L, 10L, 6));
+                () -> addUseCase.execute(java.util.UUID.nameUUIDFromBytes("1".getBytes()), java.util.UUID.nameUUIDFromBytes("10".getBytes()), 6));
     }
 
-    private static void setId(Object entity, Long id) {
+    private static void setId(Object entity, java.util.UUID id) {
         try {
             Field field = entity.getClass().getDeclaredField("id");
             field.setAccessible(true);
@@ -87,12 +87,12 @@ class CartUseCasesTest {
         }
 
         @Override
-        public Optional<Cart> findActiveByCustomerId(Long customerId) {
+        public Optional<Cart> findActiveByCustomerId(java.util.UUID customerId) {
             return Optional.ofNullable(cart);
         }
 
         @Override
-        public Optional<Cart> findActiveByCustomerIdForUpdate(Long customerId) {
+        public Optional<Cart> findActiveByCustomerIdForUpdate(java.util.UUID customerId) {
             return findActiveByCustomerId(customerId);
         }
     }
@@ -120,7 +120,7 @@ class CartUseCasesTest {
         }
 
         @Override
-        public Optional<Customer> findByIdForUpdate(Long id) {
+        public Optional<Customer> findByIdForUpdate(java.util.UUID id) {
             return Optional.of(customer);
         }
     }
@@ -138,22 +138,22 @@ class CartUseCasesTest {
         }
 
         @Override
-        public Optional<Product> findActiveById(Long id) {
+        public Optional<Product> findActiveById(java.util.UUID id) {
             return Optional.of(product);
         }
 
         @Override
-        public Optional<Product> findActiveByIdForUpdate(Long id) {
+        public Optional<Product> findActiveByIdForUpdate(java.util.UUID id) {
             return findActiveById(id);
         }
 
         @Override
-        public List<Product> searchActive(String name, Long categoryId, int offset, int limit) {
+        public List<Product> searchActive(String name, java.util.UUID categoryId, int offset, int limit) {
             return List.of(product);
         }
 
         @Override
-        public long countActive(String name, Long categoryId) {
+        public long countActive(String name, java.util.UUID categoryId) {
             return 1;
         }
     }

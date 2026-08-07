@@ -9,6 +9,9 @@ import com.api.e_commerce.presentation.rest.response.AdministratorResponse;
 import com.api.e_commerce.presentation.rest.response.CreatedResponse;
 import com.api.e_commerce.presentation.rest.response.AdministratorFinancialSummaryResponse;
 import jakarta.validation.Valid;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,6 +29,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/administrators")
 @Validated
+@Tag(name = "Administradores", description = "Cadastro, consulta e resumo financeiro")
 public class AdministratorController {
 
     private final CreateAdministratorUseCase createAdministratorUseCase;
@@ -43,6 +47,7 @@ public class AdministratorController {
     }
 
     @PostMapping
+    @Operation(summary = "Cadastrar administrador")
     public ResponseEntity<CreatedResponse> create(@Valid @RequestBody CreateAdministratorRequest request) {
         Administrator administrator = createAdministratorUseCase.execute(
                 request.name(),
@@ -56,6 +61,7 @@ public class AdministratorController {
     }
 
     @GetMapping
+    @Operation(summary = "Listar administradores")
     public ResponseEntity<List<AdministratorResponse>> findAll() {
         List<AdministratorResponse> administrators = findAllUserAdmUseCase.execute()
                 .stream()
@@ -65,8 +71,10 @@ public class AdministratorController {
     }
 
     @GetMapping("/{administratorId}/financial-summary")
+    @Operation(summary = "Consultar resumo financeiro",
+            security = @SecurityRequirement(name = "basicAuth"))
     public ResponseEntity<AdministratorFinancialSummaryResponse> financialSummary(
-            @PathVariable @Min(1) Long administratorId,
+            @PathVariable java.util.UUID administratorId,
             Authentication authentication) {
         return ResponseEntity.ok(AdministratorFinancialSummaryResponse.from(
                 administratorId,

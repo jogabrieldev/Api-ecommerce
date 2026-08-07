@@ -10,14 +10,14 @@ public interface CustomerQueryRepository {
 
     List<Customer> findAll();
 
-    List<Purchase> findApprovedPurchases(Long customerId);
+    List<Purchase> findApprovedPurchases(java.util.UUID customerId);
 
     record Purchase(
-            Long orderId,
+            java.util.UUID orderId,
             LocalDateTime purchasedAt,
-            Long administratorId,
+            java.util.UUID administratorId,
             String administratorName,
-            Long productId,
+            java.util.UUID productId,
             String productName,
             Integer quantity,
             BigDecimal unitPrice,

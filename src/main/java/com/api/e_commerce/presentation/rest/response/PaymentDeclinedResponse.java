@@ -10,7 +10,7 @@ public record PaymentDeclinedResponse(
         int status,
         String error,
         String message,
-        Long paymentId,
+        java.util.UUID paymentId,
         PaymentStatus paymentStatus,
         BigDecimal amount,
         String currency,

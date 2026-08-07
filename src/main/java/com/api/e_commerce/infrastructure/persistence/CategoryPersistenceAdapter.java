@@ -25,8 +25,17 @@ public class CategoryPersistenceAdapter implements CategoryRepository {
     }
 
     @Override
-    public Optional<Category> findById(Long id) {
+    public Optional<Category> findById(java.util.UUID id) {
         return Optional.ofNullable(entityManager.find(Category.class, id));
+    }
+
+    @Override
+    public Optional<Category> findByNameIgnoreCase(String name) {
+        return entityManager.createQuery(
+                        "select c from Category c where lower(c.name) = lower(:name)", Category.class)
+                .setParameter("name", name)
+                .getResultStream()
+                .findFirst();
     }
 
     @Override

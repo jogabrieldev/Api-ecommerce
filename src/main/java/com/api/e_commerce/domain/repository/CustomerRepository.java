@@ -14,5 +14,5 @@ public interface CustomerRepository {
 
     Optional<Customer> findByEmail(String email);
 
-    Optional<Customer> findByIdForUpdate(Long id);
+    Optional<Customer> findByIdForUpdate(java.util.UUID id);
 }

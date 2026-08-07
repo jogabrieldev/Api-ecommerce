@@ -39,7 +39,7 @@ class CheckoutCartUseCaseTest {
         Fixture fixture = fixture(5, 2);
 
         CheckoutCartUseCase.Result result = fixture.useCase.execute(
-                1L, "customer@email.com", PaymentMethod.PIX,
+                java.util.UUID.nameUUIDFromBytes("1".getBytes()), "customer@email.com", PaymentMethod.PIX,
                 "SIM-APPROVED-123456789012", IDEMPOTENCY_KEY);
         Order order = result.order();
 
@@ -59,7 +59,7 @@ class CheckoutCartUseCaseTest {
 
         assertThrows(ForbiddenOperationException.class,
                 () -> fixture.useCase.execute(
-                        1L, "other@email.com", PaymentMethod.PIX,
+                        java.util.UUID.nameUUIDFromBytes("1".getBytes()), "other@email.com", PaymentMethod.PIX,
                         "SIM-APPROVED-123456789012", IDEMPOTENCY_KEY));
         assertEquals(5, fixture.product.getStock());
         assertEquals(CartStatus.ACTIVE, fixture.cart.getStatus());
@@ -72,7 +72,7 @@ class CheckoutCartUseCaseTest {
 
         assertThrows(BusinessRuleException.class,
                 () -> fixture.useCase.execute(
-                        1L, "customer@email.com", PaymentMethod.PIX,
+                        java.util.UUID.nameUUIDFromBytes("1".getBytes()), "customer@email.com", PaymentMethod.PIX,
                         "SIM-APPROVED-123456789012", IDEMPOTENCY_KEY));
         assertEquals(3, fixture.product.getStock());
         assertEquals(CartStatus.ACTIVE, fixture.cart.getStatus());
@@ -85,7 +85,7 @@ class CheckoutCartUseCaseTest {
         PaymentDeclinedException exception = assertThrows(
                 PaymentDeclinedException.class,
                 () -> fixture.useCase.execute(
-                        1L, "customer@email.com", PaymentMethod.CREDIT_CARD,
+                        java.util.UUID.nameUUIDFromBytes("1".getBytes()), "customer@email.com", PaymentMethod.CREDIT_CARD,
                         "SIM-DECLINED-123456789012", IDEMPOTENCY_KEY));
 
         assertEquals(PaymentStatus.DECLINED, exception.getPayment().getStatus());
@@ -97,11 +97,11 @@ class CheckoutCartUseCaseTest {
     void shouldReturnSameOrderWithoutSecondStockReductionOnIdempotentRetry() {
         Fixture fixture = fixture(5, 2);
         CheckoutCartUseCase.Result first = fixture.useCase.execute(
-                1L, "customer@email.com", PaymentMethod.PIX,
+                java.util.UUID.nameUUIDFromBytes("1".getBytes()), "customer@email.com", PaymentMethod.PIX,
                 "SIM-APPROVED-123456789012", IDEMPOTENCY_KEY);
 
         CheckoutCartUseCase.Result retry = fixture.useCase.execute(
-                1L, "customer@email.com", PaymentMethod.PIX,
+                java.util.UUID.nameUUIDFromBytes("1".getBytes()), "customer@email.com", PaymentMethod.PIX,
                 "SIM-APPROVED-123456789012", IDEMPOTENCY_KEY);
 
         assertEquals(first.order(), retry.order());
@@ -124,11 +124,11 @@ class CheckoutCartUseCaseTest {
                 "11144477735", AdministratorRole.ADMIN);
         Product product = new Product(
                 "Notebook", null, new BigDecimal("100.00"), stock, administrator, null);
-        setId(customer, 1L);
-        setId(administrator, 2L);
-        setId(product, 10L);
+        setId(customer, java.util.UUID.nameUUIDFromBytes("1".getBytes()));
+        setId(administrator, java.util.UUID.nameUUIDFromBytes("2".getBytes()));
+        setId(product, java.util.UUID.nameUUIDFromBytes("10".getBytes()));
         Cart cart = new Cart(customer);
-        setId(cart, 20L);
+        setId(cart, java.util.UUID.nameUUIDFromBytes("20".getBytes()));
         cart.addProduct(product, quantity);
 
         PaymentRepositoryStub paymentRepository = new PaymentRepositoryStub();
@@ -153,7 +153,7 @@ class CheckoutCartUseCaseTest {
         @Override
         public Payment save(Payment payment) {
             if (payment.getId() == null) {
-                setId(payment, 30L);
+                setId(payment, java.util.UUID.nameUUIDFromBytes("30".getBytes()));
             }
             this.payment = payment;
             return payment;
@@ -167,7 +167,7 @@ class CheckoutCartUseCaseTest {
         }
     }
 
-    private static void setId(Object entity, Long id) {
+    private static void setId(Object entity, java.util.UUID id) {
         try {
             Field field = entity.getClass().getDeclaredField("id");
             field.setAccessible(true);
@@ -202,7 +202,7 @@ class CheckoutCartUseCaseTest {
         }
 
         @Override
-        public Optional<Customer> findByIdForUpdate(Long id) {
+        public Optional<Customer> findByIdForUpdate(java.util.UUID id) {
             return customer.getId().equals(id) ? Optional.of(customer) : Optional.empty();
         }
     }
@@ -214,12 +214,12 @@ class CheckoutCartUseCaseTest {
         }
 
         @Override
-        public Optional<Cart> findActiveByCustomerId(Long customerId) {
+        public Optional<Cart> findActiveByCustomerId(java.util.UUID customerId) {
             return cart.getStatus() == CartStatus.ACTIVE ? Optional.of(cart) : Optional.empty();
         }
 
         @Override
-        public Optional<Cart> findActiveByCustomerIdForUpdate(Long customerId) {
+        public Optional<Cart> findActiveByCustomerIdForUpdate(java.util.UUID customerId) {
             return findActiveByCustomerId(customerId);
         }
     }
@@ -236,24 +236,24 @@ class CheckoutCartUseCaseTest {
         }
 
         @Override
-        public Optional<Product> findActiveById(Long id) {
+        public Optional<Product> findActiveById(java.util.UUID id) {
             return product.getId().equals(id) && Boolean.TRUE.equals(product.getActive())
                     ? Optional.of(product)
                     : Optional.empty();
         }
 
         @Override
-        public Optional<Product> findActiveByIdForUpdate(Long id) {
+        public Optional<Product> findActiveByIdForUpdate(java.util.UUID id) {
             return findActiveById(id);
         }
 
         @Override
-        public List<Product> searchActive(String name, Long categoryId, int offset, int limit) {
+        public List<Product> searchActive(String name, java.util.UUID categoryId, int offset, int limit) {
             return List.of(product);
         }
 
         @Override
-        public long countActive(String name, Long categoryId) {
+        public long countActive(String name, java.util.UUID categoryId) {
             return 1;
         }
     }

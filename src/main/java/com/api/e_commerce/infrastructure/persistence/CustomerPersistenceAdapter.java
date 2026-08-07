@@ -47,7 +47,7 @@ public class CustomerPersistenceAdapter implements CustomerRepository, CustomerQ
     }
 
     @Override
-    public Optional<Customer> findByIdForUpdate(Long id) {
+    public Optional<Customer> findByIdForUpdate(java.util.UUID id) {
         return Optional.ofNullable(entityManager.find(Customer.class, id, LockModeType.PESSIMISTIC_WRITE));
     }
 
@@ -59,7 +59,7 @@ public class CustomerPersistenceAdapter implements CustomerRepository, CustomerQ
     }
 
     @Override
-    public List<CustomerQueryRepository.Purchase> findApprovedPurchases(Long customerId) {
+    public List<CustomerQueryRepository.Purchase> findApprovedPurchases(java.util.UUID customerId) {
         return entityManager.createQuery(
                         """
                         select new com.api.e_commerce.domain.repository.CustomerQueryRepository$Purchase(

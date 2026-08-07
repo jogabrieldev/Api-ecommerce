@@ -4,12 +4,17 @@ import com.api.e_commerce.application.usecase.CreateProductUseCase;
 import com.api.e_commerce.application.usecase.FindAllProductsUseCase;
 import com.api.e_commerce.application.usecase.FindProductByIdUseCase;
 import com.api.e_commerce.application.usecase.SearchProductsUseCase;
+import com.api.e_commerce.application.usecase.ImportFakeStoreProductsUseCase;
 import com.api.e_commerce.domain.model.Product;
 import com.api.e_commerce.presentation.rest.request.CreateProductRequest;
 import com.api.e_commerce.presentation.rest.response.CreatedResponse;
 import com.api.e_commerce.presentation.rest.response.ProductResponse;
 import com.api.e_commerce.presentation.rest.response.PageResponse;
+import com.api.e_commerce.presentation.rest.response.ProductImportResponse;
 import jakarta.validation.Valid;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.springframework.http.HttpStatus;
@@ -29,24 +34,38 @@ import java.util.List;
 @RestController
 @RequestMapping("/products")
 @Validated
+@Tag(name = "Produtos", description = "Catálogo, pesquisa, estoque e importação")
 public class ProductController {
 
     private final CreateProductUseCase createProductUseCase;
     private final FindAllProductsUseCase findAllProductsUseCase;
     private final FindProductByIdUseCase findProductByIdUseCase;
     private final SearchProductsUseCase searchProductsUseCase;
+    private final ImportFakeStoreProductsUseCase importFakeStoreProductsUseCase;
 
     public ProductController(CreateProductUseCase createProductUseCase,
                              FindAllProductsUseCase findAllProductsUseCase,
                              FindProductByIdUseCase findProductByIdUseCase,
-                             SearchProductsUseCase searchProductsUseCase) {
+                             SearchProductsUseCase searchProductsUseCase,
+                             ImportFakeStoreProductsUseCase importFakeStoreProductsUseCase) {
         this.createProductUseCase = createProductUseCase;
         this.findAllProductsUseCase = findAllProductsUseCase;
         this.findProductByIdUseCase = findProductByIdUseCase;
         this.searchProductsUseCase = searchProductsUseCase;
+        this.importFakeStoreProductsUseCase = importFakeStoreProductsUseCase;
+    }
+
+    @PostMapping("/import/fake-store")
+    @Operation(summary = "Importar produtos da Fake Store",
+            description = "Normaliza e persiste produtos por fonte e ID externo, sem duplicação.",
+            security = @SecurityRequirement(name = "basicAuth"))
+    public ResponseEntity<ProductImportResponse> importFakeStore(Authentication authentication) {
+        return ResponseEntity.ok(ProductImportResponse.from(
+                importFakeStoreProductsUseCase.execute(authentication.getName())));
     }
 
     @PostMapping
+    @Operation(summary = "Cadastrar produto", security = @SecurityRequirement(name = "basicAuth"))
     public ResponseEntity<CreatedResponse> create(@Valid @RequestBody CreateProductRequest request, Authentication authentication) {
         Product product = createProductUseCase.execute(
                 request.name(),
@@ -62,6 +81,7 @@ public class ProductController {
     }
 
     @GetMapping
+    @Operation(summary = "Listar produtos")
     public ResponseEntity<List<ProductResponse>> findAll() {
         List<ProductResponse> products = findAllProductsUseCase.execute()
                 .stream()
@@ -71,14 +91,16 @@ public class ProductController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ProductResponse> findById(@PathVariable @Min(1) Long id) {
+    @Operation(summary = "Consultar produto por ID")
+    public ResponseEntity<ProductResponse> findById(@PathVariable java.util.UUID id) {
         return ResponseEntity.ok(ProductResponse.from(findProductByIdUseCase.execute(id)));
     }
 
     @GetMapping("/search")
+    @Operation(summary = "Pesquisar produtos ativos")
     public ResponseEntity<PageResponse<ProductResponse>> search(
             @RequestParam(required = false) String name,
-            @RequestParam(required = false) @Min(1) Long categoryId,
+            @RequestParam(required = false) java.util.UUID categoryId,
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "20") @Min(1) @Max(100) int size) {
         SearchProductsUseCase.Result result =

@@ -9,8 +9,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public record CartResponse(
-        Long id,
-        Long customerId,
+        java.util.UUID id,
+        java.util.UUID customerId,
         CartStatus status,
         List<ItemResponse> items,
         int totalItems,
@@ -33,8 +33,8 @@ public record CartResponse(
     }
 
     public record ItemResponse(
-            Long id,
-            Long productId,
+            java.util.UUID id,
+            java.util.UUID productId,
             String productName,
             Integer quantity,
             BigDecimal unitPrice,

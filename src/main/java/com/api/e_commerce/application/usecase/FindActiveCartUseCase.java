@@ -16,7 +16,7 @@ public class FindActiveCartUseCase {
     }
 
     @Transactional(readOnly = true)
-    public Cart execute(Long customerId) {
+    public Cart execute(java.util.UUID customerId) {
         return cartRepository.findActiveByCustomerId(customerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Active cart not found"));
     }

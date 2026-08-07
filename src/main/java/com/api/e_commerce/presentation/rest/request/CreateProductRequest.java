@@ -13,7 +13,7 @@ public record CreateProductRequest(
         @Size(max = 2000) String description,
         @NotNull @DecimalMin(value = "0.01") BigDecimal price,
         @NotNull @Min(0) Integer stock,
-        @NotNull Long administratorId,
-        @NotNull Long categoryId
+        @NotNull java.util.UUID administratorId,
+        @NotNull java.util.UUID categoryId
 ) {
 }

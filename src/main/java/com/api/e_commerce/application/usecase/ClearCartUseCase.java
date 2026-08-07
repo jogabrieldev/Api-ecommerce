@@ -20,7 +20,7 @@ public class ClearCartUseCase {
     }
 
     @Transactional
-    public void execute(Long customerId) {
+    public void execute(java.util.UUID customerId) {
         customerRepository.findByIdForUpdate(customerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
         Cart cart = cartRepository.findActiveByCustomerId(customerId)

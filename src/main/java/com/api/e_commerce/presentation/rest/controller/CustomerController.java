@@ -14,6 +14,8 @@ import com.api.e_commerce.presentation.rest.response.CustomerResponse;
 import com.api.e_commerce.presentation.rest.response.CustomerPurchaseAnalysisResponse;
 import com.api.e_commerce.infrastructure.security.JwtService;
 import jakarta.validation.Valid;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -31,6 +33,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/customers")
+@Tag(name = "Clientes", description = "Cadastro, autenticação e consultas")
 public class CustomerController {
 
     private final CreateCustomerUseCase createCustomerUseCase;
@@ -58,6 +61,7 @@ public class CustomerController {
     }
 
     @PostMapping
+    @Operation(summary = "Cadastrar cliente")
     public ResponseEntity<CreatedResponse> create(@Valid @RequestBody CreateCustomerRequest request) {
         CreateCustomerRequest.AddressRequest address = request.address();
         Customer customer = createCustomerUseCase.execute(
@@ -82,6 +86,7 @@ public class CustomerController {
     }
 
     @PostMapping("/authentication")
+    @Operation(summary = "Autenticar cliente e emitir JWT")
     public ResponseEntity<CustomerTokenResponse> authenticate(
             @Valid @RequestBody CustomerAuthenticationRequest request) {
         Authentication authentication = authenticationManager.authenticate(
@@ -101,6 +106,7 @@ public class CustomerController {
     }
 
     @GetMapping
+    @Operation(summary = "Listar clientes")
     public ResponseEntity<List<CustomerResponse>> findAll() {
         return ResponseEntity.ok(findAllCustomersUseCase.execute()
                 .stream()
@@ -109,11 +115,13 @@ public class CustomerController {
     }
 
     @GetMapping("/email/{email}")
+    @Operation(summary = "Consultar cliente por e-mail")
     public ResponseEntity<CustomerResponse> findByEmail(@PathVariable String email) {
         return ResponseEntity.ok(CustomerResponse.from(findCustomerByEmailUseCase.execute(email)));
     }
 
     @GetMapping("/email/{email}/purchase-analysis")
+    @Operation(summary = "Analisar compras do cliente")
     public ResponseEntity<CustomerPurchaseAnalysisResponse> analyzePurchases(@PathVariable String email) {
         return ResponseEntity.ok(CustomerPurchaseAnalysisResponse.from(analyzeCustomerPurchasesUseCase.execute(email)));
     }

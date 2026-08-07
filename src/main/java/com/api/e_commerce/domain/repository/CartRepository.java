@@ -8,7 +8,7 @@ public interface CartRepository {
 
     Cart save(Cart cart);
 
-    Optional<Cart> findActiveByCustomerId(Long customerId);
+    Optional<Cart> findActiveByCustomerId(java.util.UUID customerId);
 
-    Optional<Cart> findActiveByCustomerIdForUpdate(Long customerId);
+    Optional<Cart> findActiveByCustomerIdForUpdate(java.util.UUID customerId);
 }

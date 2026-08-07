@@ -28,16 +28,16 @@ public class CartPersistenceAdapter implements CartRepository {
     }
 
     @Override
-    public Optional<Cart> findActiveByCustomerId(Long customerId) {
+    public Optional<Cart> findActiveByCustomerId(java.util.UUID customerId) {
         return findActiveByCustomerId(customerId, false);
     }
 
     @Override
-    public Optional<Cart> findActiveByCustomerIdForUpdate(Long customerId) {
+    public Optional<Cart> findActiveByCustomerIdForUpdate(java.util.UUID customerId) {
         return findActiveByCustomerId(customerId, true);
     }
 
-    private Optional<Cart> findActiveByCustomerId(Long customerId, boolean lock) {
+    private Optional<Cart> findActiveByCustomerId(java.util.UUID customerId, boolean lock) {
         var query = entityManager.createQuery(
                         """
                         select distinct c

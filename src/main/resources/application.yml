@@ -2,10 +2,10 @@ spring:
   application:
     name: e-commerce
   datasource:
-    url: ${DB_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: ${URL-source}
+    username: ${username}
+    password: ${password}
+    driver-class-name: ${diver}
   jpa:
     hibernate:
       ddl-auto: update
@@ -20,9 +20,16 @@ spring:
 server:
   port: 8080
 
+external:
+  api:
+    fake-store:
+      base-url: ${FAKE_STORE_BASE_URL:https://fakestoreapi.com}
+      connect-timeout: ${FAKE_STORE_CONNECT_TIMEOUT:3s}
+      read-timeout: ${FAKE_STORE_READ_TIMEOUT:10s}
+
 security:
   jwt:
-    secret: ${JWT_SECRET}
+    secret: ${jwt_secret}
     expiration-seconds: 3600
 
 logging:

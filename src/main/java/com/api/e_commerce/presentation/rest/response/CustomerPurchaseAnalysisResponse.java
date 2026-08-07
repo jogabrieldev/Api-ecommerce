@@ -22,7 +22,7 @@ public record CustomerPurchaseAnalysisResponse(
     }
 
     public record PurchaseResponse(
-            Long orderId,
+            java.util.UUID orderId,
             LocalDateTime purchasedAt,
             AdministratorResponse administrator,
             ProductResponse product,
@@ -44,9 +44,9 @@ public record CustomerPurchaseAnalysisResponse(
         }
     }
 
-    public record AdministratorResponse(Long id, String name) {
+    public record AdministratorResponse(java.util.UUID id, String name) {
     }
 
-    public record ProductResponse(Long id, String name) {
+    public record ProductResponse(java.util.UUID id, String name) {
     }
 }

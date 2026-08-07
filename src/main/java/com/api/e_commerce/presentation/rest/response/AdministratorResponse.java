@@ -6,7 +6,7 @@ import com.api.e_commerce.domain.model.AdministratorRole;
 import java.time.LocalDateTime;
 
 public record AdministratorResponse(
-        Long id,
+        java.util.UUID id,
         String name,
         String email,
         AdministratorRole role,

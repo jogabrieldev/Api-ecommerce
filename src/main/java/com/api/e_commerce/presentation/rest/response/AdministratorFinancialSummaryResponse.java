@@ -5,14 +5,14 @@ import com.api.e_commerce.domain.repository.AdministratorFinancialRepository;
 import java.math.BigDecimal;
 
 public record AdministratorFinancialSummaryResponse(
-        Long administratorId,
+        java.util.UUID administratorId,
         BigDecimal totalEarned,
         String currency,
         long unitsSold,
         long currentStock
 ) {
     public static AdministratorFinancialSummaryResponse from(
-            Long administratorId,
+            java.util.UUID administratorId,
             AdministratorFinancialRepository.Summary summary) {
         return new AdministratorFinancialSummaryResponse(
                 administratorId,

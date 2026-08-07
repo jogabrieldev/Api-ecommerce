@@ -215,6 +215,54 @@ mvn test
 - Mockito;
 - Lombok.
 
+## Integração Fake Store API
+
+A Fake Store API é utilizada exclusivamente como fonte inicial do catálogo. O endpoint
+externo consumido é `GET https://fakestoreapi.com/products`; usuários, carrinhos e
+autenticação externos não são importados.
+
+Um administrador autenticado pode executar:
+
+```http
+POST /products/import/fake-store
+Authorization: Basic <credenciais-administrativas>
+```
+
+O cliente HTTP possui timeouts configuráveis. Cada resposta é desserializada em um DTO
+externo, validada, normalizada e convertida antes da persistência. As categorias conhecidas
+são traduzidas (`electronics` para `Eletrônicos`, `jewelery` para `Joias`, e as categorias
+de roupas masculinas e femininas). Títulos e descrições são preservados quando não existe
+tradução local segura; a abstração `TranslationService` permite conectar outro tradutor no futuro.
+
+Produtos são identificados pela combinação `source = FAKE_STORE` e `externalId`. Chamadas
+subsequentes atualizam o produto já existente, evitando duplicidade. Após a importação,
+carrinho, estoque, pedidos e pagamentos utilizam somente os produtos persistidos no PostgreSQL.
+
+Exemplo de resposta:
+
+```json
+{
+  "totalReceived": 20,
+  "totalImported": 18,
+  "totalUpdated": 2,
+  "totalErrors": 0
+}
+```
+
+Configurações disponíveis: `FAKE_STORE_BASE_URL`, `FAKE_STORE_CONNECT_TIMEOUT` e
+`FAKE_STORE_READ_TIMEOUT`.
+
+## Swagger
+
+Com a aplicação ativa, acesse:
+
+- Swagger UI: `http://localhost:8080/swagger-ui/index.html`
+- OpenAPI JSON: `http://localhost:8080/v3/api-docs`
+
+No botão **Authorize**, use `bearerAuth` com o JWT retornado por
+`POST /customers/authentication` para o checkout. Operações administrativas usam
+`basicAuth`, com e-mail e senha de administrador.
+
 ## Executando a aplicação
 
 É necessário ter Java 21 e MySQL disponíveis.

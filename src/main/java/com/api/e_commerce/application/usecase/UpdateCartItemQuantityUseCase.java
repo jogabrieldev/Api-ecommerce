@@ -26,7 +26,7 @@ public class UpdateCartItemQuantityUseCase {
     }
 
     @Transactional
-    public Cart execute(Long customerId, Long productId, int quantity) {
+    public Cart execute(java.util.UUID customerId, java.util.UUID productId, int quantity) {
         customerRepository.findByIdForUpdate(customerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
         Product product = productRepository.findActiveById(productId)

@@ -24,7 +24,7 @@ public class FindAdministratorFinancialSummaryUseCase {
 
     @Transactional(readOnly = true)
     public AdministratorFinancialRepository.Summary execute(
-            Long administratorId, String authenticatedEmail) {
+            java.util.UUID administratorId, String authenticatedEmail) {
         Administrator administrator = administratorRepository.findById(administratorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Administrator not found"));
         if (!Boolean.TRUE.equals(administrator.getActive())) {

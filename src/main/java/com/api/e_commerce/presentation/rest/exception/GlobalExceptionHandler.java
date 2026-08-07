@@ -5,6 +5,7 @@ import com.api.e_commerce.domain.exception.ConflictException;
 import com.api.e_commerce.domain.exception.ForbiddenOperationException;
 import com.api.e_commerce.domain.exception.ResourceNotFoundException;
 import com.api.e_commerce.domain.exception.PaymentDeclinedException;
+import com.api.e_commerce.domain.exception.ExternalApiException;
 import com.api.e_commerce.presentation.rest.response.ErrorResponse;
 import com.api.e_commerce.presentation.rest.response.PaymentDeclinedResponse;
 import org.springframework.http.HttpStatus;
@@ -12,6 +13,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import jakarta.validation.ConstraintViolationException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 
 import java.time.LocalDateTime;
 
@@ -48,6 +52,25 @@ public class GlobalExceptionHandler {
             PaymentDeclinedException exception) {
         return ResponseEntity.status(HttpStatus.PAYMENT_REQUIRED)
                 .body(PaymentDeclinedResponse.from(exception.getPayment()));
+    }
+
+    @ExceptionHandler(ExternalApiException.class)
+    public ResponseEntity<ErrorResponse> handleExternalApi(ExternalApiException exception) {
+        return buildResponse(HttpStatus.BAD_GATEWAY, exception.getMessage());
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleValidation(MethodArgumentNotValidException exception) {
+        String message = exception.getBindingResult().getFieldErrors().stream()
+                .findFirst()
+                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                .orElse("Invalid request data");
+        return buildResponse(HttpStatus.BAD_REQUEST, message);
+    }
+
+    @ExceptionHandler({ConstraintViolationException.class, HttpMessageNotReadableException.class})
+    public ResponseEntity<ErrorResponse> handleInvalidRequest(Exception exception) {
+        return buildResponse(HttpStatus.BAD_REQUEST, "Invalid request data");
     }
 
     private ResponseEntity<ErrorResponse> buildResponse(HttpStatus status, String message) {

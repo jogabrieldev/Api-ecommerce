@@ -11,7 +11,7 @@ public interface AdministratorRepository {
 
     List<Administrator> getUserAdm();
 
-    Optional<Administrator> findById(Long id);
+    Optional<Administrator> findById(java.util.UUID id);
 
     Optional<Administrator> findByEmail(String email);
 

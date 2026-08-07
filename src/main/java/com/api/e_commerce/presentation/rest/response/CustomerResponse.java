@@ -6,7 +6,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public record CustomerResponse(
-        Long id,
+        java.util.UUID id,
         String name,
         String email,
         String cpf,

@@ -8,7 +8,9 @@ public interface CategoryRepository {
 
     Category save(Category category);
 
-    Optional<Category> findById(Long id);
+    Optional<Category> findById(java.util.UUID id);
+
+    Optional<Category> findByNameIgnoreCase(String name);
 
     boolean existsByNameIgnoreCase(String name);
 }

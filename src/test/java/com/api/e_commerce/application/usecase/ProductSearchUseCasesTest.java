@@ -21,10 +21,10 @@ class ProductSearchUseCasesTest {
         ProductRepositoryStub repository = new ProductRepositoryStub();
         repository.product = expected;
 
-        Product result = new FindProductByIdUseCase(repository).execute(10L);
+        Product result = new FindProductByIdUseCase(repository).execute(java.util.UUID.nameUUIDFromBytes("10".getBytes()));
 
         assertSame(expected, result);
-        assertEquals(10L, repository.requestedId);
+        assertEquals(java.util.UUID.nameUUIDFromBytes("10".getBytes()), repository.requestedId);
     }
 
     @Test
@@ -32,7 +32,7 @@ class ProductSearchUseCasesTest {
         ProductRepositoryStub repository = new ProductRepositoryStub();
 
         assertThrows(ResourceNotFoundException.class,
-                () -> new FindProductByIdUseCase(repository).execute(10L));
+                () -> new FindProductByIdUseCase(repository).execute(java.util.UUID.nameUUIDFromBytes("10".getBytes())));
     }
 
     @Test
@@ -42,10 +42,10 @@ class ProductSearchUseCasesTest {
         repository.total = 22;
 
         SearchProductsUseCase.Result result =
-                new SearchProductsUseCase(repository).execute(" Notebook ", 3L, 1, 10);
+                new SearchProductsUseCase(repository).execute(" Notebook ", java.util.UUID.nameUUIDFromBytes("3".getBytes()), 1, 10);
 
         assertEquals("Notebook", repository.name);
-        assertEquals(3L, repository.categoryId);
+        assertEquals(java.util.UUID.nameUUIDFromBytes("3".getBytes()), repository.categoryId);
         assertEquals(10, repository.offset);
         assertEquals(10, repository.limit);
         assertEquals(22, result.totalElements());
@@ -61,9 +61,9 @@ class ProductSearchUseCasesTest {
         private Product product;
         private List<Product> products = List.of();
         private long total;
-        private Long requestedId;
+        private java.util.UUID requestedId;
         private String name;
-        private Long categoryId;
+        private java.util.UUID categoryId;
         private int offset;
         private int limit;
 
@@ -78,18 +78,18 @@ class ProductSearchUseCasesTest {
         }
 
         @Override
-        public Optional<Product> findActiveById(Long id) {
+        public Optional<Product> findActiveById(java.util.UUID id) {
             requestedId = id;
             return Optional.ofNullable(product);
         }
 
         @Override
-        public Optional<Product> findActiveByIdForUpdate(Long id) {
+        public Optional<Product> findActiveByIdForUpdate(java.util.UUID id) {
             return findActiveById(id);
         }
 
         @Override
-        public List<Product> searchActive(String name, Long categoryId, int offset, int limit) {
+        public List<Product> searchActive(String name, java.util.UUID categoryId, int offset, int limit) {
             this.name = name;
             this.categoryId = categoryId;
             this.offset = offset;
@@ -98,7 +98,7 @@ class ProductSearchUseCasesTest {
         }
 
         @Override
-        public long countActive(String name, Long categoryId) {
+        public long countActive(String name, java.util.UUID categoryId) {
             return total;
         }
     }

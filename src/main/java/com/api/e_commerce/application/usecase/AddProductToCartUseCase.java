@@ -27,7 +27,7 @@ public class AddProductToCartUseCase {
     }
 
     @Transactional
-    public Cart execute(Long customerId, Long productId, int quantity) {
+    public Cart execute(java.util.UUID customerId, java.util.UUID productId, int quantity) {
         Customer customer = customerRepository.findByIdForUpdate(customerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
         if (!Boolean.TRUE.equals(customer.getActive())) {
@@ -49,8 +49,7 @@ public class AddProductToCartUseCase {
 
     private void validateStock(Product product, int requestedQuantity) {
         if (requestedQuantity > product.getStock()) {
-            throw new BusinessRuleException(
-                    "Requested quantity exceeds available stock of " + product.getStock());
+            throw new BusinessRuleException("Requested quantity exceeds available stock of " + product.getStock());
         }
     }
 }

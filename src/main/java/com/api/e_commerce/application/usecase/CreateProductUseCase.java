@@ -27,7 +27,7 @@ public class CreateProductUseCase {
     }
 
     public Product execute(String name, String description, BigDecimal price, Integer stock,
-                           Long administratorId, Long categoryId, String authenticatedEmail) {
+                           java.util.UUID administratorId, java.util.UUID categoryId, String authenticatedEmail) {
         Administrator administrator = administratorRepository.findById(administratorId)
                 .orElseThrow(() -> new ResourceNotFoundException("Administrator not found"));
         if (!Boolean.TRUE.equals(administrator.getActive())) {

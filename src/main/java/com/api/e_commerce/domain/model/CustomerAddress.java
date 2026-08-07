@@ -16,8 +16,8 @@ import jakarta.persistence.Table;
 public class CustomerAddress {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private java.util.UUID id;
 
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "customer_id", nullable = false, unique = true, foreignKey = @ForeignKey(name = "fk_customer_address_customer"))
@@ -62,7 +62,7 @@ public class CustomerAddress {
         this.customer = customer;
     }
 
-    public Long getId() {
+    public java.util.UUID getId() {
         return id;
     }
 

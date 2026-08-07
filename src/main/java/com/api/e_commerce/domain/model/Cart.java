@@ -30,8 +30,8 @@ import java.util.Optional;
 public class Cart {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private java.util.UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "customer_id", nullable = false, foreignKey = @ForeignKey(name = "fk_cart_customer"))
@@ -77,7 +77,7 @@ public class Cart {
         touch();
     }
 
-    public boolean removeProduct(Long productId) {
+    public boolean removeProduct(java.util.UUID productId) {
         boolean removed = items.removeIf(item -> item.getProduct().getId().equals(productId));
         if (removed) {
             touch();
@@ -98,7 +98,7 @@ public class Cart {
         touch();
     }
 
-    public Optional<CartItem> findItem(Long productId) {
+    public Optional<CartItem> findItem(java.util.UUID productId) {
         return items.stream()
                 .filter(item -> item.getProduct().getId().equals(productId))
                 .findFirst();
@@ -130,7 +130,7 @@ public class Cart {
         updatedAt = LocalDateTime.now();
     }
 
-    public Long getId() {
+    public java.util.UUID getId() {
         return id;
     }
 

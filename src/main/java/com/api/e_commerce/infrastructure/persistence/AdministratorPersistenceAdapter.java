@@ -26,7 +26,7 @@ public class AdministratorPersistenceAdapter implements AdministratorRepository 
     }
 
     @Override
-    public Optional<Administrator> findById(Long id) {
+    public Optional<Administrator> findById(java.util.UUID id) {
         return Optional.ofNullable(entityManager.find(Administrator.class, id));
     }
 

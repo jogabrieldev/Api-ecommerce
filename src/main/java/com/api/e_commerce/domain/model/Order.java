@@ -30,8 +30,8 @@ import java.util.List;
 public class Order {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private java.util.UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "customer_id", nullable = false,
@@ -79,7 +79,7 @@ public class Order {
         createdAt = LocalDateTime.now();
     }
 
-    public Long getId() {
+    public java.util.UUID getId() {
         return id;
     }
 

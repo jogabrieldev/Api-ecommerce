@@ -35,7 +35,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         String authorization = request.getHeader("Authorization");
         boolean checkoutRequest = "POST".equalsIgnoreCase(request.getMethod())
-                && request.getServletPath().matches("/customers/\\d+/cart/checkout");
+                && request.getServletPath().matches("/customers/[0-9a-fA-F-]{36}/cart/checkout");
         if (checkoutRequest
                 && (authorization == null || !authorization.startsWith("Bearer "))) {
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Bearer token is required");

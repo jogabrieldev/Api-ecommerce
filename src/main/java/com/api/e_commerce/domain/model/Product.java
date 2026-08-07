@@ -11,12 +11,13 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "products")
+@Table(name = "products", uniqueConstraints = @UniqueConstraint(
+        name = "uk_product_source_external_id", columnNames = {"source", "external_id"}))
 public class Product {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private java.util.UUID id;
 
     @Column(nullable = false, length = 150)
     @NotBlank
@@ -39,6 +40,16 @@ public class Product {
 
     @Column(nullable = false)
     private Boolean active = true;
+
+    @Column(name = "external_id", length = 100)
+    private String externalId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 30)
+    private ProductSource source = ProductSource.INTERNAL;
+
+    @Column(name = "image_url", length = 1000)
+    private String imageUrl;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "created_by_administrator_id",
@@ -75,6 +86,26 @@ public class Product {
         this.category = category;
     }
 
+    public Product(String name, String description, BigDecimal price, Integer stock,
+                   Administrator createdBy, Category category, String externalId,
+                   ProductSource source, String imageUrl) {
+        this(name, description, price, stock, createdBy, category);
+        this.externalId = externalId;
+        this.source = source;
+        this.imageUrl = imageUrl;
+    }
+
+    public void updateExternalData(String name, String description, BigDecimal price,
+                                   Integer stock, Category category, String imageUrl) {
+        this.name = name;
+        this.description = description;
+        this.price = price;
+        this.stock = stock;
+        this.category = category;
+        this.imageUrl = imageUrl;
+        this.active = true;
+    }
+
     @PrePersist
     private void onCreate() {
         LocalDateTime now = LocalDateTime.now();
@@ -87,7 +118,7 @@ public class Product {
         updatedAt = LocalDateTime.now();
     }
 
-    public Long getId() {
+    public java.util.UUID getId() {
         return id;
     }
 
@@ -135,6 +166,18 @@ public class Product {
 
     public Boolean getActive() {
         return active;
+    }
+
+    public String getExternalId() {
+        return externalId;
+    }
+
+    public ProductSource getSource() {
+        return source;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
     }
 
     public void setActive(Boolean active) {

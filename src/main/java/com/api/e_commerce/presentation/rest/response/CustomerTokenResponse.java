@@ -6,7 +6,7 @@ public record CustomerTokenResponse(
         String tokenType,
         String accessToken,
         long expiresIn,
-        Long customerId,
+        java.util.UUID customerId,
         String name,
         String email
 ) {

@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 
 public interface AdministratorFinancialRepository {
 
-    Summary summarize(Long administratorId);
+    Summary summarize(java.util.UUID administratorId);
 
     record Summary(
             BigDecimal totalEarned,

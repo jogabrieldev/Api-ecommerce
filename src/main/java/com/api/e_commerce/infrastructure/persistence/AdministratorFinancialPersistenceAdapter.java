@@ -18,7 +18,7 @@ public class AdministratorFinancialPersistenceAdapter
     }
 
     @Override
-    public Summary summarize(Long administratorId) {
+    public Summary summarize(java.util.UUID administratorId) {
         BigDecimal totalEarned = entityManager.createQuery(
                         """
                         select coalesce(sum(a.amount), 0)

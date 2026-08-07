@@ -1,6 +1,7 @@
 package com.api.e_commerce.infrastructure.persistence;
 
 import com.api.e_commerce.domain.model.Product;
+import com.api.e_commerce.domain.model.ProductSource;
 import com.api.e_commerce.domain.repository.ProductRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;
@@ -23,8 +24,22 @@ public class ProductPersistenceAdapter implements ProductRepository {
     @Override
     @Transactional
     public Product save(Product product) {
-        entityManager.persist(product);
-        return product;
+        if (product.getId() == null) {
+            entityManager.persist(product);
+            return product;
+        }
+        return entityManager.merge(product);
+    }
+
+    @Override
+    public Optional<Product> findBySourceAndExternalId(ProductSource source, String externalId) {
+        return entityManager.createQuery(
+                        "select p from Product p where p.source = :source and p.externalId = :externalId",
+                        Product.class)
+                .setParameter("source", source)
+                .setParameter("externalId", externalId)
+                .getResultStream()
+                .findFirst();
     }
 
     @Override
@@ -43,7 +58,7 @@ public class ProductPersistenceAdapter implements ProductRepository {
     }
 
     @Override
-    public Optional<Product> findActiveById(Long id) {
+    public Optional<Product> findActiveById(java.util.UUID id) {
         return entityManager.createQuery(
                         """
                         select p
@@ -61,7 +76,7 @@ public class ProductPersistenceAdapter implements ProductRepository {
     }
 
     @Override
-    public Optional<Product> findActiveByIdForUpdate(Long id) {
+    public Optional<Product> findActiveByIdForUpdate(java.util.UUID id) {
         return entityManager.createQuery(
                         """
                         select p
@@ -77,7 +92,7 @@ public class ProductPersistenceAdapter implements ProductRepository {
     }
 
     @Override
-    public List<Product> searchActive(String name, Long categoryId, int offset, int limit) {
+    public List<Product> searchActive(String name, java.util.UUID categoryId, int offset, int limit) {
         return entityManager.createQuery(
                         """
                         select p
@@ -99,7 +114,7 @@ public class ProductPersistenceAdapter implements ProductRepository {
     }
 
     @Override
-    public long countActive(String name, Long categoryId) {
+    public long countActive(String name, java.util.UUID categoryId) {
         return entityManager.createQuery(
                         """
                         select count(p)
