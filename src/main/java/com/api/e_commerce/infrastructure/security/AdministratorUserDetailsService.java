@@ -9,13 +9,12 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import java.util.stream.Stream;
+
 @Service
 public class AdministratorUserDetailsService implements UserDetailsService {
 
-    private static final String CREATE_PRODUCT_PERMISSION = "PRODUCT_CREATE";
     private static final String CHECKOUT_PERMISSION = "CUSTOMER_CHECKOUT";
-    private static final String FINANCIAL_READ_PERMISSION = "FINANCIAL_READ";
-    private static final String IMPORT_PRODUCT_PERMISSION = "PRODUCT_IMPORT";
 
     private final AdministratorRepository administratorRepository;
     private final CustomerRepository customerRepository;
@@ -33,13 +32,14 @@ public class AdministratorUserDetailsService implements UserDetailsService {
 
         if (administrator.isPresent()) {
             Administrator user = administrator.get();
+            String[] authorities = Stream.concat(
+                            Stream.of("ROLE_" + user.getRole().name()),
+                            user.getRole().permissions().stream()
+                                    .map(Enum::name))
+                    .toArray(String[]::new);
             return User.withUsername(user.getEmail())
                     .password(user.getPasswordHash())
-                    .authorities(
-                            "ROLE_" + user.getRole().name(),
-                            CREATE_PRODUCT_PERMISSION,
-                            IMPORT_PRODUCT_PERMISSION,
-                            FINANCIAL_READ_PERMISSION)
+                    .authorities(authorities)
                     .disabled(!Boolean.TRUE.equals(user.getActive()))
                     .build();
         }

@@ -1,5 +1,6 @@
 package com.api.e_commerce.application.usecase;
 
+import com.api.e_commerce.application.security.CustomerAccessValidator;
 import com.api.e_commerce.domain.exception.BusinessRuleException;
 import com.api.e_commerce.domain.exception.ResourceNotFoundException;
 import com.api.e_commerce.domain.model.Cart;
@@ -27,12 +28,10 @@ public class AddProductToCartUseCase {
     }
 
     @Transactional
-    public Cart execute(java.util.UUID customerId, java.util.UUID productId, int quantity) {
+    public Cart execute(java.util.UUID customerId, String authenticatedEmail, java.util.UUID productId, int quantity) {
         Customer customer = customerRepository.findByIdForUpdate(customerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
-        if (!Boolean.TRUE.equals(customer.getActive())) {
-            throw new BusinessRuleException("Inactive customer cannot use a cart");
-        }
+        CustomerAccessValidator.validateOwner(customer, authenticatedEmail);
 
         Product product = productRepository.findActiveById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));

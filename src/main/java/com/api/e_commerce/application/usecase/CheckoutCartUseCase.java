@@ -1,7 +1,7 @@
 package com.api.e_commerce.application.usecase;
 
+import com.api.e_commerce.application.security.CustomerAccessValidator;
 import com.api.e_commerce.domain.exception.BusinessRuleException;
-import com.api.e_commerce.domain.exception.ForbiddenOperationException;
 import com.api.e_commerce.domain.exception.ResourceNotFoundException;
 import com.api.e_commerce.domain.exception.ConflictException;
 import com.api.e_commerce.domain.exception.PaymentDeclinedException;
@@ -11,6 +11,7 @@ import com.api.e_commerce.domain.model.Customer;
 import com.api.e_commerce.domain.model.Order;
 import com.api.e_commerce.domain.model.Product;
 import com.api.e_commerce.domain.model.Payment;
+import com.api.e_commerce.domain.model.PaymentAllocation;
 import com.api.e_commerce.domain.model.PaymentMethod;
 import com.api.e_commerce.domain.model.PaymentStatus;
 import com.api.e_commerce.domain.payment.PaymentGateway;
@@ -22,7 +23,10 @@ import com.api.e_commerce.domain.repository.PaymentRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Comparator;
+import java.util.List;
 
 @Service
 public class CheckoutCartUseCase {
@@ -54,7 +58,7 @@ public class CheckoutCartUseCase {
                           String idempotencyKey) {
         Customer customer = customerRepository.findByIdForUpdate(customerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
-        validateAuthenticatedCustomer(customer, authenticatedEmail);
+        CustomerAccessValidator.validateOwner(customer, authenticatedEmail);
         Payment existingPayment = paymentRepository.findByIdempotencyKey(idempotencyKey)
                 .orElse(null);
         if (existingPayment != null) {
@@ -68,8 +72,12 @@ public class CheckoutCartUseCase {
         }
 
         Payment payment = new Payment(customer, cart, paymentMethod, idempotencyKey);
-        PaymentGateway.Result charge = paymentGateway.charge(
-                paymentToken, paymentMethod, payment.getAmount(), payment.getCurrency());
+        PaymentGateway.Result charge;
+        try {
+            charge = paymentGateway.charge(paymentToken, paymentMethod, payment.getAmount(), payment.getCurrency());
+        } catch (IllegalArgumentException exception) {
+            throw new BusinessRuleException(exception.getMessage());
+        }
         if (!charge.approved()) {
             payment.decline(charge.declineReason(), charge.reference());
             paymentRepository.save(payment);
@@ -83,9 +91,13 @@ public class CheckoutCartUseCase {
         Order order = new Order(customer, cart);
         cart.complete();
         orderRepository.save(order);
-        payment.approve(order, charge.reference());
+        try {
+            payment.approve(order, charge.reference());
+        } catch (IllegalStateException exception) {
+            throw new ConflictException(exception.getMessage());
+        }
         paymentRepository.save(payment);
-        return new Result(order, payment);
+        return Result.from(order, payment, false);
     }
 
     private Result handleIdempotentRetry(Payment payment, java.util.UUID customerId) {
@@ -93,22 +105,12 @@ public class CheckoutCartUseCase {
             throw new ConflictException("Idempotency key belongs to another customer");
         }
         if (payment.getStatus() == PaymentStatus.APPROVED && payment.getOrder() != null) {
-            return new Result(payment.getOrder(), payment);
+            return Result.from(payment.getOrder(), payment, true);
         }
         if (payment.getStatus() == PaymentStatus.DECLINED) {
             throw new PaymentDeclinedException(payment);
         }
         throw new ConflictException("Payment with this idempotency key is still processing");
-    }
-
-    private void validateAuthenticatedCustomer(Customer customer, String authenticatedEmail) {
-        if (!Boolean.TRUE.equals(customer.getActive())) {
-            throw new BusinessRuleException("Inactive customer cannot complete checkout");
-        }
-        if (!customer.getEmail().equalsIgnoreCase(authenticatedEmail)) {
-            throw new ForbiddenOperationException(
-                    "Authenticated customer cannot complete another customer's cart");
-        }
     }
 
     private void validateAndDecreaseStock(CartItem item) {
@@ -126,6 +128,90 @@ public class CheckoutCartUseCase {
         product.decreaseStock(item.getQuantity());
     }
 
-    public record Result(Order order, Payment payment) {
+    public record Result(OrderData order, PaymentData payment, boolean replayed) {
+
+        private static Result from(Order order, Payment payment, boolean replayed) {
+            return new Result(OrderData.from(order), PaymentData.from(payment), replayed);
+        }
+    }
+
+    public record OrderData(
+            java.util.UUID id,
+            java.util.UUID customerId,
+            java.util.UUID cartId,
+            com.api.e_commerce.domain.model.OrderStatus status,
+            List<OrderItemData> items,
+            BigDecimal total,
+            LocalDateTime createdAt
+    ) {
+        private static OrderData from(Order order) {
+            return new OrderData(
+                    order.getId(),
+                    order.getCustomer().getId(),
+                    order.getCart().getId(),
+                    order.getStatus(),
+                    order.getItems().stream().map(OrderItemData::from).toList(),
+                    order.getTotal(),
+                    order.getCreatedAt()
+            );
+        }
+    }
+
+    public record OrderItemData(
+            java.util.UUID productId,
+            String productName,
+            Integer quantity,
+            BigDecimal unitPrice,
+            BigDecimal subtotal
+    ) {
+        private static OrderItemData from(com.api.e_commerce.domain.model.OrderItem item) {
+            return new OrderItemData(
+                    item.getProduct().getId(),
+                    item.getProductName(),
+                    item.getQuantity(),
+                    item.getUnitPrice(),
+                    item.getSubtotal()
+            );
+        }
+    }
+
+    public record PaymentData(
+            java.util.UUID id,
+            PaymentStatus status,
+            PaymentMethod method,
+            BigDecimal amount,
+            String currency,
+            String gatewayReference,
+            String idempotencyKey,
+            List<AllocationData> allocations,
+            LocalDateTime createdAt
+    ) {
+        private static PaymentData from(Payment payment) {
+            return new PaymentData(
+                    payment.getId(),
+                    payment.getStatus(),
+                    payment.getMethod(),
+                    payment.getAmount(),
+                    payment.getCurrency(),
+                    payment.getGatewayReference(),
+                    payment.getIdempotencyKey(),
+                    payment.getAllocations().stream().map(AllocationData::from).toList(),
+                    payment.getCreatedAt()
+            );
+        }
+    }
+
+    public record AllocationData(
+            java.util.UUID administratorId,
+            String administratorName,
+            BigDecimal amount
+    ) {
+        private static AllocationData from(PaymentAllocation allocation) {
+            return new AllocationData(
+                    allocation.getAdministrator().getId(),
+                    allocation.getAdministrator().getName(),
+                    allocation.getAmount()
+            );
+        }
     }
 }

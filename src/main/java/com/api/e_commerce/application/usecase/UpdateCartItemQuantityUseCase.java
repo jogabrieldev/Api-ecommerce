@@ -1,5 +1,6 @@
 package com.api.e_commerce.application.usecase;
 
+import com.api.e_commerce.application.security.CustomerAccessValidator;
 import com.api.e_commerce.domain.exception.BusinessRuleException;
 import com.api.e_commerce.domain.exception.ResourceNotFoundException;
 import com.api.e_commerce.domain.model.Cart;
@@ -26,9 +27,11 @@ public class UpdateCartItemQuantityUseCase {
     }
 
     @Transactional
-    public Cart execute(java.util.UUID customerId, java.util.UUID productId, int quantity) {
-        customerRepository.findByIdForUpdate(customerId)
+    public Cart execute(java.util.UUID customerId, String authenticatedEmail,
+                        java.util.UUID productId, int quantity) {
+        var customer = customerRepository.findByIdForUpdate(customerId)
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found"));
+        CustomerAccessValidator.validateOwner(customer, authenticatedEmail);
         Product product = productRepository.findActiveById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
         Cart cart = cartRepository.findActiveByCustomerId(customerId)

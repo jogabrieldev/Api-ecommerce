@@ -16,6 +16,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.dao.ConcurrencyFailureException;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDateTime;
 
@@ -68,9 +71,19 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.BAD_REQUEST, message);
     }
 
-    @ExceptionHandler({ConstraintViolationException.class, HttpMessageNotReadableException.class})
+    @ExceptionHandler({
+            ConstraintViolationException.class,
+            HttpMessageNotReadableException.class,
+            MethodArgumentTypeMismatchException.class
+    })
     public ResponseEntity<ErrorResponse> handleInvalidRequest(Exception exception) {
         return buildResponse(HttpStatus.BAD_REQUEST, "Invalid request data");
+    }
+
+    @ExceptionHandler({ConcurrencyFailureException.class, DataIntegrityViolationException.class})
+    public ResponseEntity<ErrorResponse> handlePersistenceConflict(RuntimeException exception) {
+        return buildResponse(HttpStatus.CONFLICT,
+                "The operation conflicts with data that was updated concurrently");
     }
 
     private ResponseEntity<ErrorResponse> buildResponse(HttpStatus status, String message) {

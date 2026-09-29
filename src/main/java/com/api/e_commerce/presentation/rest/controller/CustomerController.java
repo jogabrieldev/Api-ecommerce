@@ -15,6 +15,7 @@ import com.api.e_commerce.presentation.rest.response.CustomerPurchaseAnalysisRes
 import com.api.e_commerce.infrastructure.security.JwtService;
 import jakarta.validation.Valid;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -106,7 +107,9 @@ public class CustomerController {
     }
 
     @GetMapping
-    @Operation(summary = "Listar clientes")
+    @Operation(summary = "Listar clientes",
+            description = "Operação exclusiva de ADMIN; dados pessoais são minimizados e mascarados.",
+            security = @SecurityRequirement(name = "basicAuth"))
     public ResponseEntity<List<CustomerResponse>> findAll() {
         return ResponseEntity.ok(findAllCustomersUseCase.execute()
                 .stream()
@@ -115,13 +118,17 @@ public class CustomerController {
     }
 
     @GetMapping("/email/{email}")
-    @Operation(summary = "Consultar cliente por e-mail")
+    @Operation(summary = "Consultar cliente por e-mail",
+            description = "Operação exclusiva de ADMIN; dados pessoais são minimizados e mascarados.",
+            security = @SecurityRequirement(name = "basicAuth"))
     public ResponseEntity<CustomerResponse> findByEmail(@PathVariable String email) {
         return ResponseEntity.ok(CustomerResponse.from(findCustomerByEmailUseCase.execute(email)));
     }
 
     @GetMapping("/email/{email}/purchase-analysis")
-    @Operation(summary = "Analisar compras do cliente")
+    @Operation(summary = "Analisar compras do cliente",
+            description = "Operação exclusiva de ADMIN.",
+            security = @SecurityRequirement(name = "basicAuth"))
     public ResponseEntity<CustomerPurchaseAnalysisResponse> analyzePurchases(@PathVariable String email) {
         return ResponseEntity.ok(CustomerPurchaseAnalysisResponse.from(analyzeCustomerPurchasesUseCase.execute(email)));
     }

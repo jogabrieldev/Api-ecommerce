@@ -47,7 +47,9 @@ public class AdministratorController {
     }
 
     @PostMapping
-    @Operation(summary = "Cadastrar administrador")
+    @Operation(summary = "Cadastrar administrador",
+            description = "Operação exclusiva de administradores com papel ADMIN.",
+            security = @SecurityRequirement(name = "basicAuth"))
     public ResponseEntity<CreatedResponse> create(@Valid @RequestBody CreateAdministratorRequest request) {
         Administrator administrator = createAdministratorUseCase.execute(
                 request.name(),
@@ -61,7 +63,9 @@ public class AdministratorController {
     }
 
     @GetMapping
-    @Operation(summary = "Listar administradores")
+    @Operation(summary = "Listar administradores",
+            description = "Operação exclusiva de administradores com papel ADMIN.",
+            security = @SecurityRequirement(name = "basicAuth"))
     public ResponseEntity<List<AdministratorResponse>> findAll() {
         List<AdministratorResponse> administrators = findAllUserAdmUseCase.execute()
                 .stream()

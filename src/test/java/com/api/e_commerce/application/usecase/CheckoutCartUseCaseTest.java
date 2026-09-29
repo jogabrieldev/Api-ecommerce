@@ -9,7 +9,6 @@ import com.api.e_commerce.domain.model.Cart;
 import com.api.e_commerce.domain.model.CartStatus;
 import com.api.e_commerce.domain.model.Customer;
 import com.api.e_commerce.domain.model.CustomerAddress;
-import com.api.e_commerce.domain.model.Order;
 import com.api.e_commerce.domain.model.Product;
 import com.api.e_commerce.domain.model.Payment;
 import com.api.e_commerce.domain.model.PaymentMethod;
@@ -41,16 +40,16 @@ class CheckoutCartUseCaseTest {
         CheckoutCartUseCase.Result result = fixture.useCase.execute(
                 java.util.UUID.nameUUIDFromBytes("1".getBytes()), "customer@email.com", PaymentMethod.PIX,
                 "SIM-APPROVED-123456789012", IDEMPOTENCY_KEY);
-        Order order = result.order();
+        CheckoutCartUseCase.OrderData order = result.order();
 
         assertEquals(3, fixture.product.getStock());
         assertEquals(CartStatus.COMPLETED, fixture.cart.getStatus());
-        assertEquals(new BigDecimal("200.00"), order.getTotal());
-        assertEquals(1, order.getItems().size());
-        assertEquals(PaymentStatus.APPROVED, result.payment().getStatus());
-        assertEquals(new BigDecimal("200.00"), result.payment().getAmount());
+        assertEquals(new BigDecimal("200.00"), order.total());
+        assertEquals(1, order.items().size());
+        assertEquals(PaymentStatus.APPROVED, result.payment().status());
+        assertEquals(new BigDecimal("200.00"), result.payment().amount());
         assertEquals(new BigDecimal("200.00"),
-                result.payment().getAllocations().getFirst().getAmount());
+                result.payment().allocations().getFirst().amount());
     }
 
     @Test

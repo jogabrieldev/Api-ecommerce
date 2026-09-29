@@ -6,6 +6,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -36,6 +37,14 @@ public class CategoryPersistenceAdapter implements CategoryRepository {
                 .setParameter("name", name)
                 .getResultStream()
                 .findFirst();
+    }
+
+    @Override
+    public List<Category> findAllActive() {
+        return entityManager.createQuery(
+                        "select c from Category c where c.active = true order by c.name, c.id",
+                        Category.class)
+                .getResultList();
     }
 
     @Override

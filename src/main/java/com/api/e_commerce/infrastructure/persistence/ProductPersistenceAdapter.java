@@ -34,8 +34,7 @@ public class ProductPersistenceAdapter implements ProductRepository {
     @Override
     public Optional<Product> findBySourceAndExternalId(ProductSource source, String externalId) {
         return entityManager.createQuery(
-                        "select p from Product p where p.source = :source and p.externalId = :externalId",
-                        Product.class)
+                "select p from Product p where p.source = :source and p.externalId = :externalId", Product.class)
                 .setParameter("source", source)
                 .setParameter("externalId", externalId)
                 .getResultStream()
@@ -71,7 +70,9 @@ public class ProductPersistenceAdapter implements ProductRepository {
                         Product.class
                 )
                 .setParameter("id", id)
-                .getResultStream()
+                .setMaxResults(1)
+                .getResultList()
+                .stream()
                 .findFirst();
     }
 

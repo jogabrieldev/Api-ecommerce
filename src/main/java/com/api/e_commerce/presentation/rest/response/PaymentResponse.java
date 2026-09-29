@@ -1,7 +1,6 @@
 package com.api.e_commerce.presentation.rest.response;
 
-import com.api.e_commerce.domain.model.Payment;
-import com.api.e_commerce.domain.model.PaymentAllocation;
+import com.api.e_commerce.application.usecase.CheckoutCartUseCase;
 import com.api.e_commerce.domain.model.PaymentMethod;
 import com.api.e_commerce.domain.model.PaymentStatus;
 
@@ -20,17 +19,17 @@ public record PaymentResponse(
         List<AllocationResponse> allocations,
         LocalDateTime createdAt
 ) {
-    public static PaymentResponse from(Payment payment) {
+    public static PaymentResponse from(CheckoutCartUseCase.PaymentData payment) {
         return new PaymentResponse(
-                payment.getId(),
-                payment.getStatus(),
-                payment.getMethod(),
-                payment.getAmount(),
-                payment.getCurrency(),
-                payment.getGatewayReference(),
-                payment.getIdempotencyKey(),
-                payment.getAllocations().stream().map(AllocationResponse::from).toList(),
-                payment.getCreatedAt()
+                payment.id(),
+                payment.status(),
+                payment.method(),
+                payment.amount(),
+                payment.currency(),
+                payment.gatewayReference(),
+                payment.idempotencyKey(),
+                payment.allocations().stream().map(AllocationResponse::from).toList(),
+                payment.createdAt()
         );
     }
 
@@ -39,11 +38,11 @@ public record PaymentResponse(
             String administratorName,
             BigDecimal amount
     ) {
-        private static AllocationResponse from(PaymentAllocation allocation) {
+        private static AllocationResponse from(CheckoutCartUseCase.AllocationData allocation) {
             return new AllocationResponse(
-                    allocation.getAdministrator().getId(),
-                    allocation.getAdministrator().getName(),
-                    allocation.getAmount()
+                    allocation.administratorId(),
+                    allocation.administratorName(),
+                    allocation.amount()
             );
         }
     }

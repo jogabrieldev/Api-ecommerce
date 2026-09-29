@@ -34,6 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/customers/{customerId}/cart")
 @Validated
 @Tag(name = "Carrinho, pedidos e pagamentos", description = "Carrinho, estoque, checkout e pedido")
+@SecurityRequirement(name = "bearerAuth")
 public class CartController {
 
     private final AddProductToCartUseCase addProductToCartUseCase;
@@ -61,18 +62,22 @@ public class CartController {
     @Operation(summary = "Adicionar produto ao carrinho")
     public ResponseEntity<CartResponse> addItem(
             @PathVariable java.util.UUID customerId,
-            @Valid @RequestBody AddCartItemRequest request) {
+            @Valid @RequestBody AddCartItemRequest request,
+            Authentication authentication) {
         return ResponseEntity.ok(CartResponse.from(
                 addProductToCartUseCase.execute(
-                        customerId, request.productId(), request.quantity())));
+                        customerId, authentication.getName(),
+                        request.productId(), request.quantity())));
     }
 
     @GetMapping
     @Operation(summary = "Consultar carrinho ativo")
     public ResponseEntity<CartResponse> findActive(
-            @PathVariable java.util.UUID customerId) {
+            @PathVariable java.util.UUID customerId,
+            Authentication authentication) {
         return ResponseEntity.ok(
-                CartResponse.from(findActiveCartUseCase.execute(customerId)));
+                CartResponse.from(findActiveCartUseCase.execute(
+                        customerId, authentication.getName())));
     }
 
     @PatchMapping("/items/{productId}")
@@ -80,43 +85,47 @@ public class CartController {
     public ResponseEntity<CartResponse> updateItem(
             @PathVariable java.util.UUID customerId,
             @PathVariable java.util.UUID productId,
-            @Valid @RequestBody UpdateCartItemRequest request) {
+            @Valid @RequestBody UpdateCartItemRequest request,
+            Authentication authentication) {
         return ResponseEntity.ok(CartResponse.from(
                 updateCartItemQuantityUseCase.execute(
-                        customerId, productId, request.quantity())));
+                        customerId, authentication.getName(),
+                        productId, request.quantity())));
     }
 
     @DeleteMapping("/items/{productId}")
     @Operation(summary = "Remover item do carrinho")
     public ResponseEntity<CartResponse> removeItem(
             @PathVariable java.util.UUID customerId,
-            @PathVariable java.util.UUID productId) {
+            @PathVariable java.util.UUID productId,
+            Authentication authentication) {
         return ResponseEntity.ok(CartResponse.from(
-                removeCartItemUseCase.execute(customerId, productId)));
+                removeCartItemUseCase.execute(
+                        customerId, authentication.getName(), productId)));
     }
 
     @DeleteMapping
     @Operation(summary = "Limpar carrinho")
     public ResponseEntity<Void> clear(
-            @PathVariable java.util.UUID customerId) {
-        clearCartUseCase.execute(customerId);
+            @PathVariable java.util.UUID customerId,
+            Authentication authentication) {
+        clearCartUseCase.execute(customerId, authentication.getName());
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/checkout")
-    @Operation(summary = "Finalizar carrinho e criar pedido",
-            security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Finalizar carrinho e criar pedido")
     public ResponseEntity<CheckoutResponse> checkout(
             @PathVariable java.util.UUID customerId,
             @Valid @RequestBody CheckoutRequest request,
             Authentication authentication) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(CheckoutResponse.from(
-                        checkoutCartUseCase.execute(
-                                customerId,
-                                authentication.getName(),
-                                request.paymentMethod(),
-                                request.paymentToken(),
-                                request.idempotencyKey())));
+        CheckoutCartUseCase.Result result = checkoutCartUseCase.execute(
+                customerId,
+                authentication.getName(),
+                request.paymentMethod(),
+                request.paymentToken(),
+                request.idempotencyKey());
+        HttpStatus status = result.replayed() ? HttpStatus.OK : HttpStatus.CREATED;
+        return ResponseEntity.status(status).body(CheckoutResponse.from(result));
     }
 }

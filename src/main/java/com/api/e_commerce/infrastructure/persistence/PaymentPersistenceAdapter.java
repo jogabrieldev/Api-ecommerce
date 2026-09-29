@@ -27,11 +27,15 @@ public class PaymentPersistenceAdapter implements PaymentRepository {
 
     @Override
     public Optional<Payment> findByIdempotencyKey(String idempotencyKey) {
-        return entityManager.createQuery(
+        Optional<Payment> payment = entityManager.createQuery(
                         """
                         select distinct p
                         from Payment p
-                        left join fetch p.order
+                        join fetch p.customer
+                        join fetch p.cart
+                        left join fetch p.order o
+                        left join fetch o.customer
+                        left join fetch o.cart
                         left join fetch p.allocations a
                         left join fetch a.administrator
                         where p.idempotencyKey = :idempotencyKey
@@ -41,5 +45,17 @@ public class PaymentPersistenceAdapter implements PaymentRepository {
                 .getResultList()
                 .stream()
                 .findFirst();
+        payment.map(Payment::getOrder).ifPresent(order -> entityManager.createQuery(
+                        """
+                        select distinct o
+                        from Order o
+                        left join fetch o.items i
+                        left join fetch i.product
+                        where o.id = :orderId
+                        """,
+                        com.api.e_commerce.domain.model.Order.class)
+                .setParameter("orderId", order.getId())
+                .getResultList());
+        return payment;
     }
 }

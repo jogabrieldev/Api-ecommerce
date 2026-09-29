@@ -16,28 +16,29 @@ import java.io.IOException;
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private static final Logger LOGGER =
-            LoggerFactory.getLogger(JwtAuthenticationFilter.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
 
-    public JwtAuthenticationFilter(JwtService jwtService,
-                                   UserDetailsService userDetailsService) {
+    public JwtAuthenticationFilter(JwtService jwtService, UserDetailsService userDetailsService) {
         this.jwtService = jwtService;
         this.userDetailsService = userDetailsService;
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain)
-            throws ServletException, IOException {
+    protected void doFilterInternal(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            FilterChain filterChain)
+            throws ServletException, IOException
+    {
         String authorization = request.getHeader("Authorization");
-        boolean checkoutRequest = "POST".equalsIgnoreCase(request.getMethod())
-                && request.getServletPath().matches("/customers/[0-9a-fA-F-]{36}/cart/checkout");
-        if (checkoutRequest
-                && (authorization == null || !authorization.startsWith("Bearer "))) {
+        String requestPath = request.getRequestURI()
+                .substring(request.getContextPath().length());
+        boolean customerCartRequest = requestPath
+                .matches("/customers/[^/]+/cart(?:/.*)?");
+        if (customerCartRequest && (authorization == null || !authorization.startsWith("Bearer "))) {
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Bearer token is required");
             return;
         }
