@@ -18,4 +18,10 @@ public interface AdministratorRepository {
     boolean existsByEmail(String email);
 
     boolean existsByCpf(String cpf);
+
+    void lockInitialManagerCreation();
+
+    default boolean existsAny() {
+        return !getUserAdm().isEmpty();
+    }
 }

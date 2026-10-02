@@ -6,7 +6,8 @@ import java.math.BigDecimal;
 
 public interface PaymentGateway {
 
-    Result charge(String token, PaymentMethod method, BigDecimal amount, String currency);
+    Result charge(String idempotencyKey, String token, PaymentMethod method,
+                  BigDecimal amount, String currency);
 
     record Result(boolean approved, String reference, String declineReason) {
     }

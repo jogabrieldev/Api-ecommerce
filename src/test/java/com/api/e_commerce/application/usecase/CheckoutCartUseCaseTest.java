@@ -1,6 +1,7 @@
 package com.api.e_commerce.application.usecase;
 
 import com.api.e_commerce.domain.exception.BusinessRuleException;
+import com.api.e_commerce.domain.exception.ConflictException;
 import com.api.e_commerce.domain.exception.ForbiddenOperationException;
 import com.api.e_commerce.domain.exception.PaymentDeclinedException;
 import com.api.e_commerce.domain.model.Administrator;
@@ -13,6 +14,7 @@ import com.api.e_commerce.domain.model.Product;
 import com.api.e_commerce.domain.model.Payment;
 import com.api.e_commerce.domain.model.PaymentMethod;
 import com.api.e_commerce.domain.model.PaymentStatus;
+import com.api.e_commerce.domain.payment.PaymentGateway;
 import com.api.e_commerce.domain.repository.PaymentRepository;
 import com.api.e_commerce.domain.repository.CartRepository;
 import com.api.e_commerce.domain.repository.CustomerRepository;
@@ -50,6 +52,8 @@ class CheckoutCartUseCaseTest {
         assertEquals(new BigDecimal("200.00"), result.payment().amount());
         assertEquals(new BigDecimal("200.00"),
                 result.payment().allocations().getFirst().amount());
+        assertEquals(1, fixture.gateway.calls);
+        assertEquals(IDEMPOTENCY_KEY, fixture.gateway.lastIdempotencyKey);
     }
 
     @Test
@@ -75,6 +79,7 @@ class CheckoutCartUseCaseTest {
                         "SIM-APPROVED-123456789012", IDEMPOTENCY_KEY));
         assertEquals(3, fixture.product.getStock());
         assertEquals(CartStatus.ACTIVE, fixture.cart.getStatus());
+        assertEquals(0, fixture.gateway.calls);
     }
 
     @Test
@@ -90,6 +95,7 @@ class CheckoutCartUseCaseTest {
         assertEquals(PaymentStatus.DECLINED, exception.getPayment().getStatus());
         assertEquals(5, fixture.product.getStock());
         assertEquals(CartStatus.ACTIVE, fixture.cart.getStatus());
+        assertEquals(1, fixture.gateway.calls);
     }
 
     @Test
@@ -106,6 +112,34 @@ class CheckoutCartUseCaseTest {
         assertEquals(first.order(), retry.order());
         assertEquals(first.payment(), retry.payment());
         assertEquals(3, fixture.product.getStock());
+        assertEquals(1, fixture.gateway.calls);
+    }
+
+    @Test
+    void shouldRejectChangedPriceBeforeCallingTheGateway() {
+        Fixture fixture = fixture(5, 2);
+        fixture.product.setPrice(new BigDecimal("110.00"));
+
+        assertThrows(ConflictException.class, () -> fixture.useCase.execute(
+                java.util.UUID.nameUUIDFromBytes("1".getBytes()), "customer@email.com",
+                PaymentMethod.PIX, "SIM-APPROVED-123456789012", IDEMPOTENCY_KEY));
+
+        assertEquals(5, fixture.product.getStock());
+        assertEquals(CartStatus.ACTIVE, fixture.cart.getStatus());
+        assertEquals(0, fixture.gateway.calls);
+    }
+
+    @Test
+    void shouldRejectIdempotentRetryWithDifferentPaymentMethod() {
+        Fixture fixture = fixture(5, 2);
+        fixture.useCase.execute(
+                java.util.UUID.nameUUIDFromBytes("1".getBytes()), "customer@email.com", PaymentMethod.PIX,
+                "SIM-APPROVED-123456789012", IDEMPOTENCY_KEY);
+
+        assertThrows(ConflictException.class, () -> fixture.useCase.execute(
+                java.util.UUID.nameUUIDFromBytes("1".getBytes()), "customer@email.com",
+                PaymentMethod.CREDIT_CARD, "SIM-APPROVED-123456789012", IDEMPOTENCY_KEY));
+        assertEquals(1, fixture.gateway.calls);
     }
 
     private static Fixture fixture(int stock, int quantity) {
@@ -131,19 +165,16 @@ class CheckoutCartUseCaseTest {
         cart.addProduct(product, quantity);
 
         PaymentRepositoryStub paymentRepository = new PaymentRepositoryStub();
+        RecordingPaymentGateway gateway = new RecordingPaymentGateway();
         CheckoutCartUseCase useCase = new CheckoutCartUseCase(
                 new CustomerRepositoryStub(customer),
                 new CartRepositoryStub(cart),
                 new ProductRepositoryStub(product),
                 order -> order,
                 paymentRepository,
-                (token, method, amount, currency) -> token.contains("APPROVED")
-                        ? new com.api.e_commerce.domain.payment.PaymentGateway.Result(
-                                true, "SIM-REFERENCE", null)
-                        : new com.api.e_commerce.domain.payment.PaymentGateway.Result(
-                                false, "SIM-REFERENCE", "Payment declined")
+                gateway
         );
-        return new Fixture(useCase, cart, product);
+        return new Fixture(useCase, cart, product, gateway);
     }
 
     private static class PaymentRepositoryStub implements PaymentRepository {
@@ -176,7 +207,23 @@ class CheckoutCartUseCaseTest {
         }
     }
 
-    private record Fixture(CheckoutCartUseCase useCase, Cart cart, Product product) {
+    private static class RecordingPaymentGateway implements PaymentGateway {
+        private int calls;
+        private String lastIdempotencyKey;
+
+        @Override
+        public Result charge(String idempotencyKey, String token, PaymentMethod method,
+                             BigDecimal amount, String currency) {
+            calls++;
+            lastIdempotencyKey = idempotencyKey;
+            return token.contains("APPROVED")
+                    ? new Result(true, "SIM-REFERENCE", null)
+                    : new Result(false, "SIM-REFERENCE", "Payment declined");
+        }
+    }
+
+    private record Fixture(CheckoutCartUseCase useCase, Cart cart, Product product,
+                           RecordingPaymentGateway gateway) {
     }
 
     private record CustomerRepositoryStub(Customer customer) implements CustomerRepository {
@@ -230,7 +277,7 @@ class CheckoutCartUseCaseTest {
         }
 
         @Override
-        public List<Product> findAll() {
+        public List<Product> findAllActive() {
             return List.of(product);
         }
 

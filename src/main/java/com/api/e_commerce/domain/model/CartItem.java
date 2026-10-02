@@ -51,8 +51,9 @@ public class CartItem {
         this.unitPrice = unitPrice;
     }
 
-    void changeQuantity(int quantity) {
+    void changeQuantityAndPrice(int quantity, BigDecimal unitPrice) {
         this.quantity = quantity;
+        this.unitPrice = unitPrice;
     }
 
     public BigDecimal getSubtotal() {

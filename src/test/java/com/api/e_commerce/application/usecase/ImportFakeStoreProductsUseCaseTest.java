@@ -60,7 +60,7 @@ class ImportFakeStoreProductsUseCaseTest {
         @Override public Optional<Product> findBySourceAndExternalId(ProductSource source, String externalId) {
             return Optional.ofNullable(entries.get(source + ":" + externalId));
         }
-        @Override public List<Product> findAll() { return List.copyOf(entries.values()); }
+        @Override public List<Product> findAllActive() { return List.copyOf(entries.values()); }
         @Override public Optional<Product> findActiveById(java.util.UUID id) { return Optional.empty(); }
         @Override public Optional<Product> findActiveByIdForUpdate(java.util.UUID id) { return Optional.empty(); }
         @Override public List<Product> searchActive(String name, java.util.UUID categoryId, int offset, int limit) { return List.of(); }

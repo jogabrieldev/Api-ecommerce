@@ -72,6 +72,34 @@ class CartUseCasesTest {
     }
 
     @Test
+    void shouldRefreshTheAcceptedPriceWhenAddingTheProductAgain() {
+        java.util.UUID customerId = java.util.UUID.nameUUIDFromBytes("1".getBytes());
+        java.util.UUID productId = java.util.UUID.nameUUIDFromBytes("10".getBytes());
+        addUseCase.execute(customerId, "customer@email.com", productId, 1);
+        productRepository.product().setPrice(new BigDecimal("120.00"));
+
+        Cart cart = addUseCase.execute(customerId, "customer@email.com", productId, 1);
+
+        assertEquals(2, cart.getTotalItems());
+        assertEquals(new BigDecimal("240.00"), cart.getTotal());
+    }
+
+    @Test
+    void shouldRefreshTheAcceptedPriceWhenUpdatingQuantity() {
+        java.util.UUID customerId = java.util.UUID.nameUUIDFromBytes("1".getBytes());
+        java.util.UUID productId = java.util.UUID.nameUUIDFromBytes("10".getBytes());
+        addUseCase.execute(customerId, "customer@email.com", productId, 1);
+        productRepository.product().setPrice(new BigDecimal("130.00"));
+        UpdateCartItemQuantityUseCase updateUseCase = new UpdateCartItemQuantityUseCase(
+                cartRepository, customerRepository, productRepository);
+
+        Cart cart = updateUseCase.execute(
+                customerId, "customer@email.com", productId, 2);
+
+        assertEquals(new BigDecimal("260.00"), cart.getTotal());
+    }
+
+    @Test
     void shouldRejectAccessFromAnotherCustomer() {
         assertThrows(ForbiddenOperationException.class,
                 () -> addUseCase.execute(java.util.UUID.nameUUIDFromBytes("1".getBytes()),
@@ -173,7 +201,7 @@ class CartUseCasesTest {
         }
 
         @Override
-        public List<Product> findAll() {
+        public List<Product> findAllActive() {
             return List.of(product);
         }
 

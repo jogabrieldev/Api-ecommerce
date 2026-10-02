@@ -38,6 +38,7 @@ class AdministratorUserDetailsServiceTest {
 
         assertEquals(Set.of(
                 "ROLE_MANAGER",
+                AdministratorPermission.ADMINISTRATOR_CREATE.name(),
                 AdministratorPermission.CATEGORY_MANAGE.name(),
                 AdministratorPermission.PRODUCT_CREATE.name(),
                 AdministratorPermission.PRODUCT_IMPORT.name(),

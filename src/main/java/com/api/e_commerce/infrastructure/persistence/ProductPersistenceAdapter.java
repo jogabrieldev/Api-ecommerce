@@ -42,13 +42,15 @@ public class ProductPersistenceAdapter implements ProductRepository {
     }
 
     @Override
-    public List<Product> findAll() {
+    public List<Product> findAllActive() {
         return entityManager.createQuery(
                         """
                         select p
                         from Product p
                         join fetch p.createdBy
                         join fetch p.category
+                        where p.active = true
+                          and p.category.active = true
                         order by p.id
                         """,
                         Product.class
@@ -66,6 +68,7 @@ public class ProductPersistenceAdapter implements ProductRepository {
                         join fetch p.category
                         where p.id = :id
                           and p.active = true
+                          and p.category.active = true
                         """,
                         Product.class
                 )
@@ -78,18 +81,22 @@ public class ProductPersistenceAdapter implements ProductRepository {
 
     @Override
     public Optional<Product> findActiveByIdForUpdate(java.util.UUID id) {
-        return entityManager.createQuery(
+        Optional<Product> product = entityManager.createQuery(
                         """
                         select p
                         from Product p
                         where p.id = :id
                           and p.active = true
+                          and p.category.active = true
                         """,
                         Product.class)
                 .setParameter("id", id)
                 .setLockMode(LockModeType.PESSIMISTIC_WRITE)
                 .getResultStream()
                 .findFirst();
+        product.ifPresent(value -> entityManager.refresh(value, LockModeType.PESSIMISTIC_WRITE));
+        return product.filter(value -> Boolean.TRUE.equals(value.getActive())
+                && Boolean.TRUE.equals(value.getCategory().getActive()));
     }
 
     @Override
@@ -101,6 +108,7 @@ public class ProductPersistenceAdapter implements ProductRepository {
                         join fetch p.createdBy
                         join fetch p.category
                         where p.active = true
+                          and p.category.active = true
                           and (:name is null or lower(p.name) like :name)
                           and (:categoryId is null or p.category.id = :categoryId)
                         order by p.name, p.id
@@ -121,6 +129,7 @@ public class ProductPersistenceAdapter implements ProductRepository {
                         select count(p)
                         from Product p
                         where p.active = true
+                          and p.category.active = true
                           and (:name is null or lower(p.name) like :name)
                           and (:categoryId is null or p.category.id = :categoryId)
                         """,

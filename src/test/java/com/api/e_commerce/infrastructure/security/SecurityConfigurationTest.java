@@ -99,9 +99,9 @@ class SecurityConfigurationTest {
     }
 
     @Test
-    void shouldAllowAdminToManageAdministratorsAndCategories() throws Exception {
+    void shouldForbidAdminFromCreatingAdministratorsButAllowListingAndCategories() throws Exception {
         mockMvc.perform(post("/administrators").header("Authorization", basic("admin")))
-                .andExpect(status().isOk());
+                .andExpect(status().isForbidden());
         mockMvc.perform(get("/administrators").header("Authorization", basic("admin")))
                 .andExpect(status().isOk());
         mockMvc.perform(post("/categories").header("Authorization", basic("admin")))
@@ -109,9 +109,9 @@ class SecurityConfigurationTest {
     }
 
     @Test
-    void shouldRestrictManagerToCategoryManagement() throws Exception {
+    void shouldAllowManagerToCreateAdministratorsButNotListThem() throws Exception {
         mockMvc.perform(post("/administrators").header("Authorization", basic("manager")))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isOk());
         mockMvc.perform(get("/administrators").header("Authorization", basic("manager")))
                 .andExpect(status().isForbidden());
         mockMvc.perform(post("/categories").header("Authorization", basic("manager")))
@@ -225,11 +225,11 @@ class SecurityConfigurationTest {
             return username -> switch (username) {
                 case "admin" -> User.withUsername(username)
                         .password(password)
-                        .authorities(administratorAuthorities("ADMIN", true))
+                        .authorities(administratorAuthorities("ADMIN", false))
                         .build();
                 case "manager" -> User.withUsername(username)
                         .password(password)
-                        .authorities(administratorAuthorities("MANAGER", false))
+                        .authorities(administratorAuthorities("MANAGER", true))
                         .build();
                 default -> User.withUsername(username)
                         .password(password)
@@ -238,14 +238,17 @@ class SecurityConfigurationTest {
             };
         }
 
-        private static String[] administratorAuthorities(String role, boolean admin) {
+        private static String[] administratorAuthorities(String role, boolean manager) {
             Stream<String> permissions = Stream.of(
                     AdministratorPermission.CATEGORY_MANAGE,
                     AdministratorPermission.PRODUCT_CREATE,
                     AdministratorPermission.PRODUCT_IMPORT,
                     AdministratorPermission.FINANCIAL_READ
             ).map(Enum::name);
-            if (admin) {
+            if (manager) {
+                permissions = Stream.concat(permissions, Stream.of(
+                        AdministratorPermission.ADMINISTRATOR_CREATE.name()));
+            } else {
                 permissions = Stream.concat(permissions, Stream.of(
                         AdministratorPermission.ADMINISTRATOR_MANAGE.name(),
                         AdministratorPermission.CUSTOMER_READ.name()));

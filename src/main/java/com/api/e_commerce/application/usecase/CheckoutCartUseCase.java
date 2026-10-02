@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -62,7 +63,7 @@ public class CheckoutCartUseCase {
         Payment existingPayment = paymentRepository.findByIdempotencyKey(idempotencyKey)
                 .orElse(null);
         if (existingPayment != null) {
-            return handleIdempotentRetry(existingPayment, customerId);
+            return handleIdempotentRetry(existingPayment, customerId, paymentMethod);
         }
 
         Cart cart = cartRepository.findActiveByCustomerIdForUpdate(customerId)
@@ -72,9 +73,15 @@ public class CheckoutCartUseCase {
         }
 
         Payment payment = new Payment(customer, cart, paymentMethod, idempotencyKey);
+        // Claim and flush the unique key before producing any external side effect.
+        paymentRepository.save(payment);
+
+        List<ReservedStock> reservedStock = lockAndValidateStock(cart);
         PaymentGateway.Result charge;
         try {
-            charge = paymentGateway.charge(paymentToken, paymentMethod, payment.getAmount(), payment.getCurrency());
+            charge = paymentGateway.charge(
+                    idempotencyKey, paymentToken, paymentMethod,
+                    payment.getAmount(), payment.getCurrency());
         } catch (IllegalArgumentException exception) {
             throw new BusinessRuleException(exception.getMessage());
         }
@@ -84,9 +91,7 @@ public class CheckoutCartUseCase {
             throw new PaymentDeclinedException(payment);
         }
 
-        cart.getItems().stream()
-                .sorted(Comparator.comparing(item -> item.getProduct().getId()))
-                .forEach(this::validateAndDecreaseStock);
+        reservedStock.forEach(stock -> stock.product().decreaseStock(stock.quantity()));
 
         Order order = new Order(customer, cart);
         cart.complete();
@@ -100,9 +105,14 @@ public class CheckoutCartUseCase {
         return Result.from(order, payment, false);
     }
 
-    private Result handleIdempotentRetry(Payment payment, java.util.UUID customerId) {
+    private Result handleIdempotentRetry(Payment payment, java.util.UUID customerId,
+                                         PaymentMethod paymentMethod) {
         if (!payment.getCustomer().getId().equals(customerId)) {
             throw new ConflictException("Idempotency key belongs to another customer");
+        }
+        if (payment.getMethod() != paymentMethod) {
+            throw new ConflictException(
+                    "Idempotency key was already used with a different payment method");
         }
         if (payment.getStatus() == PaymentStatus.APPROVED && payment.getOrder() != null) {
             return Result.from(payment.getOrder(), payment, true);
@@ -113,19 +123,35 @@ public class CheckoutCartUseCase {
         throw new ConflictException("Payment with this idempotency key is still processing");
     }
 
-    private void validateAndDecreaseStock(CartItem item) {
+    private List<ReservedStock> lockAndValidateStock(Cart cart) {
+        List<ReservedStock> reservedStock = new ArrayList<>();
+        cart.getItems().stream()
+                .sorted(Comparator.comparing(item -> item.getProduct().getId()))
+                .forEach(item -> reservedStock.add(lockAndValidateStock(item)));
+        return reservedStock;
+    }
+
+    private ReservedStock lockAndValidateStock(CartItem item) {
         java.util.UUID productId = item.getProduct().getId();
         Product product = productRepository.findActiveByIdForUpdate(productId)
                 .orElseThrow(() -> new BusinessRuleException(
                         "Product " + productId + " is unavailable"));
 
+        if (item.getUnitPrice().compareTo(product.getPrice()) != 0) {
+            throw new ConflictException(
+                    "Price changed for product " + product.getName()
+                            + ". Update the cart before checkout");
+        }
         if (item.getQuantity() > product.getStock()) {
             throw new BusinessRuleException(
                     "Insufficient stock for product " + product.getName()
                             + ". Available: " + product.getStock()
                             + ", requested: " + item.getQuantity());
         }
-        product.decreaseStock(item.getQuantity());
+        return new ReservedStock(product, item.getQuantity());
+    }
+
+    private record ReservedStock(Product product, int quantity) {
     }
 
     public record Result(OrderData order, PaymentData payment, boolean replayed) {

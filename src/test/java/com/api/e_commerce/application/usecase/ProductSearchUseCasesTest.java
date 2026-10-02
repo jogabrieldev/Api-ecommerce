@@ -73,7 +73,7 @@ class ProductSearchUseCasesTest {
         }
 
         @Override
-        public List<Product> findAll() {
+        public List<Product> findAllActive() {
             return products;
         }
 

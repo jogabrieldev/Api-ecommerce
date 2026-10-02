@@ -16,6 +16,6 @@ public class FindAllProductsUseCase {
     }
 
     public List<Product> execute() {
-        return productRepository.findAll();
+        return productRepository.findAllActive();
     }
 }

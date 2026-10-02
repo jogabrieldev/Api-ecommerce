@@ -10,6 +10,8 @@ class AdministratorRoleTest {
 
     @Test
     void adminShouldHaveSensitiveManagementPermissions() {
+        assertFalse(AdministratorRole.ADMIN.permissions()
+                .contains(AdministratorPermission.ADMINISTRATOR_CREATE));
         assertTrue(AdministratorRole.ADMIN.permissions()
                 .contains(AdministratorPermission.ADMINISTRATOR_MANAGE));
         assertTrue(AdministratorRole.ADMIN.permissions()
@@ -17,7 +19,9 @@ class AdministratorRoleTest {
     }
 
     @Test
-    void managerShouldBeLimitedToCatalogAndOwnFinancialData() {
+    void managerShouldCreateAdminsButNotManageAdministratorListing() {
+        assertTrue(AdministratorRole.MANAGER.permissions()
+                .contains(AdministratorPermission.ADMINISTRATOR_CREATE));
         assertFalse(AdministratorRole.MANAGER.permissions()
                 .contains(AdministratorPermission.ADMINISTRATOR_MANAGE));
         assertFalse(AdministratorRole.MANAGER.permissions()

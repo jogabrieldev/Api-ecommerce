@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: ${TEST_DB_URL:jdbc:postgresql://localhost:5432/ecommerce_db?currentSchema=ecommerce_test}
+    username: ${TEST_DB_USERNAME:postgres}
+    password: ${TEST_DB_PASSWORD:101010}
+    driver-class-name: org.postgresql.Driver
+  flyway:
+    schemas: ecommerce_test
+    create-schemas: true
+    baseline-on-migrate: false
+
+security:
+  cors:
+    allowed-origins: http://localhost:8080
+  jwt:
+    secret: test-only-jwt-secret-with-at-least-32-characters
+    expiration-seconds: 3600

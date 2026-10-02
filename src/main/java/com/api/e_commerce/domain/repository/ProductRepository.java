@@ -14,7 +14,7 @@ public interface ProductRepository {
         return Optional.empty();
     }
 
-    List<Product> findAll();
+    List<Product> findAllActive();
 
     Optional<Product> findActiveById(java.util.UUID id);
 

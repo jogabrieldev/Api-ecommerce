@@ -15,6 +15,7 @@ public enum AdministratorRole {
             AdministratorPermission.FINANCIAL_READ
     )),
     MANAGER(EnumSet.of(
+            AdministratorPermission.ADMINISTRATOR_CREATE,
             AdministratorPermission.CATEGORY_MANAGE,
             AdministratorPermission.PRODUCT_CREATE,
             AdministratorPermission.PRODUCT_IMPORT,

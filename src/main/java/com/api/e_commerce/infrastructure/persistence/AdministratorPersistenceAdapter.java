@@ -12,6 +12,8 @@ import java.util.Optional;
 @Repository
 public class AdministratorPersistenceAdapter implements AdministratorRepository {
 
+    private static final long INITIAL_MANAGER_LOCK_ID = 1_904_202_026L;
+
     private final EntityManager entityManager;
 
     public AdministratorPersistenceAdapter(EntityManager entityManager) {
@@ -58,6 +60,21 @@ public class AdministratorPersistenceAdapter implements AdministratorRepository 
         return entityManager.createQuery(
                         "select count(a) from Administrator a where a.cpf = :cpf", Long.class)
                 .setParameter("cpf", cpf)
+                .getSingleResult() > 0;
+    }
+
+    @Override
+    public void lockInitialManagerCreation() {
+        entityManager.createNativeQuery("select pg_advisory_xact_lock(:lockId)")
+                .setParameter("lockId", INITIAL_MANAGER_LOCK_ID)
+                .getSingleResult();
+    }
+
+    @Override
+    public boolean existsAny() {
+        return entityManager.createQuery(
+                        "select count(a) from Administrator a", Long.class)
+                .setMaxResults(1)
                 .getSingleResult() > 0;
     }
 }

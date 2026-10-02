@@ -55,6 +55,8 @@ O desenvolvimento utiliza uma organização inspirada em Clean Architecture, bus
 - validação de propriedade do cliente;
 - criação de pedido e itens de pedido;
 - preservação do preço dos produtos no momento da compra;
+- validação do preço atual antes de qualquer cobrança;
+- atualização do preço aceito ao adicionar novamente ou alterar a quantidade do item;
 - redução transacional do estoque;
 - pagamentos simulados aprovados ou recusados;
 - suporte a cartão de crédito, cartão de débito e PIX;
@@ -119,7 +121,7 @@ Os casos de uso dependem dos contratos definidos no domínio, sem conhecer detal
 
 Implementa os recursos técnicos utilizados pela aplicação:
 
-- persistência com JPA, Hibernate e MySQL;
+- persistência com JPA, Hibernate, PostgreSQL e Flyway;
 - consultas e agregações com JPQL;
 - bloqueios pessimistas para operações concorrentes;
 - hash de senhas com BCrypt;
@@ -150,7 +152,7 @@ As senhas nunca são armazenadas em texto puro e são protegidas com BCrypt.
 
 ## Persistência e consistência
 
-A aplicação utiliza MySQL com JPA e Hibernate.
+A aplicação utiliza PostgreSQL com JPA, Hibernate e migrations versionadas pelo Flyway.
 
 Os fluxos que alteram múltiplos registros são transacionais. Operações de carrinho e checkout utilizam bloqueios no banco para reduzir conflitos entre requisições simultâneas.
 
@@ -209,7 +211,8 @@ mvn test
 - Spring Data JPA;
 - Hibernate;
 - Jakarta Validation;
-- MySQL;
+- PostgreSQL;
+- Flyway;
 - Maven;
 - JUnit;
 - Mockito;
@@ -252,6 +255,23 @@ Exemplo de resposta:
 Configurações disponíveis: `FAKE_STORE_BASE_URL`, `FAKE_STORE_CONNECT_TIMEOUT` e
 `FAKE_STORE_READ_TIMEOUT`.
 
+## Bootstrap do primeiro gerente
+
+O bootstrap fica desativado por padrão e cria exclusivamente o primeiro usuário com papel
+`MANAGER`. Ele não executa quando já existe qualquer administrador e nunca possui credenciais
+padrão. Para uma instalação nova, configure temporariamente:
+
+```text
+BOOTSTRAP_INITIAL_MANAGER_ENABLED=true
+BOOTSTRAP_INITIAL_MANAGER_NAME=Gerente Inicial
+BOOTSTRAP_INITIAL_MANAGER_EMAIL=manager@example.com
+BOOTSTRAP_INITIAL_MANAGER_PASSWORD=<senha forte entre 12 e 72 caracteres>
+BOOTSTRAP_INITIAL_MANAGER_CPF=<CPF válido>
+```
+
+Depois da primeira inicialização bem-sucedida, remova as variáveis de bootstrap. A senha é
+armazenada somente como hash BCrypt.
+
 ## Swagger
 
 Com a aplicação ativa, acesse:
@@ -265,7 +285,7 @@ No botão **Authorize**, use `bearerAuth` com o JWT retornado por
 
 ## Executando a aplicação
 
-É necessário ter Java 21 e MySQL disponíveis.
+É necessário ter Java 21 e PostgreSQL disponíveis.
 
 Crie o banco utilizado pela aplicação:
 
@@ -274,6 +294,19 @@ CREATE DATABASE ecommerce_db;
 ```
 
 Configure as variáveis de ambiente necessárias para o banco de dados e para a assinatura dos tokens JWT.
+
+### Configuração e migrations
+
+A aplicação utiliza uma configuração única. Por padrão, conecta ao PostgreSQL em `localhost`,
+e os valores podem ser substituídos por `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`
+e `CORS_ALLOWED_ORIGINS`. O Hibernate usa `ddl-auto: validate`; toda alteração estrutural deve
+ser criada em `db/migration`.
+
+Para um banco vazio, o Flyway executa todas as migrations automaticamente. Para adotar Flyway
+em um banco legado que já contenha as tabelas da aplicação, habilite explicitamente e de forma temporária
+`SPRING_FLYWAY_BASELINE_ON_MIGRATE=true` na primeira inicialização e remova a variável depois.
+A migration de identidades interrompe a inicialização caso encontre e-mail ou CPF compartilhado
+entre cliente e administrador; esses dados devem ser saneados antes de tentar novamente.
 
 Execute a aplicação com o Maven Wrapper:
 

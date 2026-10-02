@@ -93,5 +93,9 @@ class FindAdministratorFinancialSummaryUseCaseTest {
         public boolean existsByCpf(String cpf) {
             return administrator.getCpf().equals(cpf);
         }
+
+        @Override
+        public void lockInitialManagerCreation() {
+        }
     }
 }

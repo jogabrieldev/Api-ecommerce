@@ -62,7 +62,9 @@ public class Cart {
     public void addProduct(Product product, int quantity) {
         Optional<CartItem> existingItem = findItem(product.getId());
         if (existingItem.isPresent()) {
-            existingItem.get().changeQuantity(existingItem.get().getQuantity() + quantity);
+            existingItem.get().changeQuantityAndPrice(
+                    existingItem.get().getQuantity() + quantity,
+                    product.getPrice());
             touch();
             return;
         }
@@ -73,7 +75,7 @@ public class Cart {
     public void changeProductQuantity(Product product, int quantity) {
         CartItem item = findItem(product.getId())
                 .orElseThrow(() -> new IllegalArgumentException("Product is not in the cart"));
-        item.changeQuantity(quantity);
+        item.changeQuantityAndPrice(quantity, product.getPrice());
         touch();
     }
 

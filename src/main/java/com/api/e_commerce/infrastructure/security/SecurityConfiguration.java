@@ -48,7 +48,7 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.GET, "/categories", "/categories/*/products")
                         .permitAll()
                         .requestMatchers(HttpMethod.POST, "/administrators")
-                        .hasAuthority(AdministratorPermission.ADMINISTRATOR_MANAGE.name())
+                        .hasAuthority(AdministratorPermission.ADMINISTRATOR_CREATE.name())
                         .requestMatchers(HttpMethod.GET, "/administrators")
                         .hasAuthority(AdministratorPermission.ADMINISTRATOR_MANAGE.name())
                         .requestMatchers(HttpMethod.POST, "/categories")

@@ -1,10 +1,11 @@
 package com.api.e_commerce.application.usecase;
 
 import com.api.e_commerce.domain.exception.BusinessRuleException;
-import com.api.e_commerce.domain.exception.ConflictException;
 import com.api.e_commerce.domain.model.Customer;
 import com.api.e_commerce.domain.model.CustomerAddress;
+import com.api.e_commerce.domain.model.IdentityType;
 import com.api.e_commerce.domain.repository.CustomerRepository;
+import com.api.e_commerce.domain.repository.UserIdentityRegistry;
 import com.api.e_commerce.domain.security.PasswordHasher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,10 +18,14 @@ public class CreateCustomerUseCase {
 
     private final CustomerRepository customerRepository;
     private final PasswordHasher passwordHasher;
+    private final UserIdentityRegistry userIdentityRegistry;
 
-    public CreateCustomerUseCase(CustomerRepository customerRepository, PasswordHasher passwordHasher) {
+    public CreateCustomerUseCase(CustomerRepository customerRepository,
+                                 PasswordHasher passwordHasher,
+                                 UserIdentityRegistry userIdentityRegistry) {
         this.customerRepository = customerRepository;
         this.passwordHasher = passwordHasher;
+        this.userIdentityRegistry = userIdentityRegistry;
     }
 
     @Transactional
@@ -33,12 +38,8 @@ public class CreateCustomerUseCase {
         if (birthDate.isAfter(LocalDate.now())) {
             throw new BusinessRuleException("Birth date cannot be in the future");
         }
-        if (customerRepository.existsByEmail(normalizedEmail)) {
-            throw new ConflictException("E-mail already registered");
-        }
-        if (customerRepository.existsByCpf(normalizedCpf)) {
-            throw new ConflictException("CPF already registered");
-        }
+        String passwordHash = passwordHasher.hash(password);
+        userIdentityRegistry.claim(normalizedEmail, normalizedCpf, IdentityType.CUSTOMER);
 
         CustomerAddress address = new CustomerAddress(
                 digitsOnly(addressData.zipCode()),
@@ -52,7 +53,7 @@ public class CreateCustomerUseCase {
         Customer customer = new Customer(
                 name.trim(),
                 normalizedEmail,
-                passwordHasher.hash(password),
+                passwordHash,
                 normalizedCpf,
                 normalizedPhone,
                 birthDate,

@@ -48,15 +48,19 @@ public class AdministratorController {
 
     @PostMapping
     @Operation(summary = "Cadastrar administrador",
-            description = "Operação exclusiva de administradores com papel ADMIN.",
+            description = "Operação exclusiva de administradores com papel MANAGER. "
+                    + "A API permite criar somente usuários com papel ADMIN.",
             security = @SecurityRequirement(name = "basicAuth"))
-    public ResponseEntity<CreatedResponse> create(@Valid @RequestBody CreateAdministratorRequest request) {
+    public ResponseEntity<CreatedResponse> create(
+            @Valid @RequestBody CreateAdministratorRequest request,
+            Authentication authentication) {
         Administrator administrator = createAdministratorUseCase.execute(
                 request.name(),
                 request.email(),
                 request.password(),
                 request.cpf(),
-                request.role()
+                request.role(),
+                authentication.getName()
         );
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new CreatedResponse(administrator.getId(), administrator.getName()));
