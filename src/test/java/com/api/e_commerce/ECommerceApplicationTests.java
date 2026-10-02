@@ -25,7 +25,7 @@ class ECommerceApplicationTests {
 						+ "where table_schema = current_schema() and table_name = 'user_identities'",
 				Integer.class);
 
-		assertEquals(3, appliedMigrations);
+		assertEquals(13, appliedMigrations);
 		assertEquals(1, identityTable);
 	}
 

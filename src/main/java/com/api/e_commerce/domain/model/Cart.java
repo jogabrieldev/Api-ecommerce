@@ -63,8 +63,8 @@ public class Cart {
         Optional<CartItem> existingItem = findItem(product.getId());
         if (existingItem.isPresent()) {
             existingItem.get().changeQuantityAndPrice(
-                    existingItem.get().getQuantity() + quantity,
-                    product.getPrice());
+                    existingItem.get().getQuantity() + quantity, product.getPrice()
+            );
             touch();
             return;
         }
